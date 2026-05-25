@@ -1,5 +1,5 @@
-// API 地址 — 部署云函数后替换为你的 API Gateway 地址
-const API_BASE = ''
+// API 地址
+const API_BASE = 'https://long-d0g1dx0nl38c1394f.api.tcloudbasegateway.com/v1/functions/scfhelloworld'
 
 // ===== 本地存储 =====
 const LOCAL_KEY = 'personal_app_data'
