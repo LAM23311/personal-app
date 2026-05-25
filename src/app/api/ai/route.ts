@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         model: finalModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
-        max_tokens: 500,
+        max_tokens: 2000,
       }),
     })
 

@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { generateWords } from '@/lib/ai'
 
-type Phase = 'setup' | 'words' | 'reveal' | 'playing' | 'result'
+type Phase = 'setup' | 'reveal' | 'playing' | 'result'
+
+type WordPair = { wordA: string; wordB: string; category: string }
 
 type Player = {
   id: number
@@ -22,16 +24,17 @@ export default function UndercoverPage() {
   const [phase, setPhase] = useState<Phase>('setup')
   const [playerCount, setPlayerCount] = useState(4)
   const [undercoverCount, setUndercoverCount] = useState(1)
-  const [wordA, setWordA] = useState('')
-  const [wordB, setWordB] = useState('')
-  const [category, setCategory] = useState('')
+  const [wordPool, setWordPool] = useState<WordPair[]>([])
+  const [poolIndex, setPoolIndex] = useState(0)
   const [players, setPlayers] = useState<Player[]>([])
   const [currentReveal, setCurrentReveal] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // 加载设置
+  // 当前使用的词对
+  const currentPair = wordPool[poolIndex] || null
+
   useEffect(() => {
     if (localStorage.getItem('uc_spell') === '5566') {
       setApiReady(true)
@@ -47,34 +50,50 @@ export default function UndercoverPage() {
     }
   }
 
-  // 生成词语
-  async function handleGenerate() {
+  // 生成10组词语
+  async function fetchWordPool() {
+    setLoading(true)
+    setError('')
+    try {
+      const pairs = await generateWords('', '', '', '5566')
+      setWordPool(pairs)
+      setPoolIndex(0)
+      return pairs
+    } catch (e: any) {
+      setError(e.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 点击开始：生成词池并直接分配
+  async function handleStart() {
     if (!apiReady) {
       setShowSpell(true)
       return
     }
-    setLoading(true)
-    setError('')
-    try {
-      const words = await generateWords('', '', '', '5566')
-      setWordA(words.wordA)
-      setWordB(words.wordB)
-      setCategory(words.category)
-      setPhase('words')
-    } catch (e: any) {
-      setError(e.message)
+    const pairs = await fetchWordPool()
+    if (pairs && pairs.length > 0) {
+      assignWords(pairs[0])
     }
-    setLoading(false)
+  }
+
+  // 换一组：用下一组词，直接重新分配
+  function nextPair() {
+    const nextIdx = poolIndex + 1
+    if (nextIdx < wordPool.length) {
+      setPoolIndex(nextIdx)
+      assignWords(wordPool[nextIdx])
+    }
   }
 
   // 分配词语给玩家
-  function assignWords() {
+  function assignWords(pair: WordPair) {
     const newPlayers: Player[] = []
-    // 创建角色分配：先放卧底再放平民
     const roles: boolean[] = []
     for (let i = 0; i < undercoverCount; i++) roles.push(true)
     while (roles.length < playerCount) roles.push(false)
-    // 随机打乱
     for (let i = roles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [roles[i], roles[j]] = [roles[j], roles[i]]
@@ -82,7 +101,7 @@ export default function UndercoverPage() {
     for (let i = 0; i < playerCount; i++) {
       newPlayers.push({
         id: i + 1,
-        word: roles[i] ? wordB : wordA,
+        word: roles[i] ? pair.wordB : pair.wordA,
         isUndercover: roles[i],
         eliminated: false,
       })
@@ -93,7 +112,6 @@ export default function UndercoverPage() {
     setPhase('reveal')
   }
 
-  // 查看词语
   function handleReveal() {
     setRevealed(true)
   }
@@ -107,27 +125,18 @@ export default function UndercoverPage() {
     }
   }
 
-  // 淘汰玩家
   function eliminate(id: number) {
     const updated = players.map(p => p.id === id ? { ...p, eliminated: true } : p)
     setPlayers(updated)
-
     const alive = updated.filter(p => !p.eliminated)
     const undercoverAlive = alive.filter(p => p.isUndercover)
-
-    if (undercoverAlive.length === 0) {
-      setPhase('result')
-    } else if (alive.length <= 2) {
+    if (undercoverAlive.length === 0 || alive.length <= 2) {
       setPhase('result')
     }
   }
 
-  // 重新开始
   function reset() {
     setPhase('setup')
-    setWordA('')
-    setWordB('')
-    setCategory('')
     setPlayers([])
     setCurrentReveal(0)
     setRevealed(false)
@@ -170,7 +179,6 @@ export default function UndercoverPage() {
         </div>
       )}
 
-      {/* 错误提示 */}
       {error && (
         <div className="bg-red-50 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>
       )}
@@ -196,43 +204,25 @@ export default function UndercoverPage() {
             </div>
           </div>
 
-          <button onClick={handleGenerate} disabled={loading} className="btn btn-primary w-full mt-2">
-            {loading ? '生成中...' : !apiReady ? '点击激活AI' : '生成词语'}
+          <button onClick={handleStart} disabled={loading} className="btn btn-primary w-full mt-2">
+            {loading ? '生成中...' : !apiReady ? '点击激活AI' : '开始游戏'}
           </button>
-        </div>
-      )}
-
-      {/* ===== 词语确认 ===== */}
-      {phase === 'words' && (
-        <div className="card text-center">
-          <div className="text-sm text-gray-500 mb-4">类别：{category}</div>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-xl p-4">
-              <div className="text-xs text-blue-500 mb-1">平民词</div>
-              <div className="text-2xl font-bold">{wordA}</div>
-            </div>
-            <div className="bg-red-50 rounded-xl p-4">
-              <div className="text-xs text-red-500 mb-1">卧底词</div>
-              <div className="text-2xl font-bold">{wordB}</div>
-            </div>
-          </div>
-          <div className="text-xs text-gray-400 mb-4">
-            {playerCount}人游戏 · {undercoverCount}个卧底 · {playerCount - undercoverCount}个平民
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleGenerate} disabled={loading} className="btn btn-ghost flex-1">
-              换一组
-            </button>
-            <button onClick={assignWords} className="btn btn-primary flex-1">
-              开始分配
-            </button>
-          </div>
         </div>
       )}
 
       {/* ===== 逐个看词 ===== */}
       {phase === 'reveal' && (
         <div className="text-center">
+          {/* 换一组按钮 */}
+          {poolIndex < wordPool.length - 1 && (
+            <button
+              onClick={nextPair}
+              className="text-xs text-blue-400 mb-3 underline"
+            >
+              换一组词（剩余 {wordPool.length - poolIndex - 1} 组）
+            </button>
+          )}
+
           <div className="text-sm text-gray-500 mb-4">
             请把手机递给 玩家 {players[currentReveal]?.id}
           </div>
@@ -322,11 +312,13 @@ export default function UndercoverPage() {
             <div className="text-2xl font-bold mb-2">
               {winner === 'civilians' ? '平民胜利！' : '卧底胜利！'}
             </div>
-            <div className="text-sm text-gray-500">
-              平民词：<span className="font-semibold text-blue-600">{wordA}</span>
-              {' · '}
-              卧底词：<span className="font-semibold text-red-500">{wordB}</span>
-            </div>
+            {currentPair && (
+              <div className="text-sm text-gray-500">
+                平民词：<span className="font-semibold text-blue-600">{currentPair.wordA}</span>
+                {' · '}
+                卧底词：<span className="font-semibold text-red-500">{currentPair.wordB}</span>
+              </div>
+            )}
           </div>
 
           <div className="card mb-4">
