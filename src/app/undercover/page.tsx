@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { generateWords } from '@/lib/ai'
+import CIHUI from '@/lib/cihui-data'
 
 type Phase = 'setup' | 'reveal' | 'playing' | 'result'
 type WordPair = { wordA: string; wordB: string; category: string }
 type Player = { id: number; word: string; isUndercover: boolean; eliminated: boolean }
 
 const POOL_MAX = 10
-const POOL_LOW = 5 // 低于此值触发补充
+const POOL_LOW = 5
 
 const S = {
   primary: '#4A4035',
@@ -16,21 +17,21 @@ const S = {
   muted: '#B0A899',
   accent: '#8FBF8F',
   accentBg: 'rgba(143,191,143,0.12)',
-  accentBorder: 'rgba(143,191,143,0.4)',
   danger: '#D4766A',
   dangerBg: 'rgba(212,118,106,0.1)',
   dangerBorder: 'rgba(212,118,106,0.3)',
   blue: '#7BA7C9',
   blueBg: 'rgba(123,167,201,0.1)',
-  tagBg: '#EDE7DB',
+}
+
+// 从内置词库随机取 count 组
+function pickLocal(count: number): WordPair[] {
+  const shuffled = [...CIHUI].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, count).map(([wordA, wordB]) => ({ wordA, wordB, category: '本地词库' }))
 }
 
 export default function UndercoverPage() {
-  const [apiReady, setApiReady] = useState(false)
-  const [showSpell, setShowSpell] = useState(false)
-  const [spellInput, setSpellInput] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
-
   const [phase, setPhase] = useState<Phase>('setup')
   const [playerCount, setPlayerCount] = useState(4)
   const [undercoverCount, setUndercoverCount] = useState(1)
@@ -41,42 +42,19 @@ export default function UndercoverPage() {
   const [revealed, setRevealed] = useState(false)
   const [error, setError] = useState('')
 
-  // 用 ref 做词池队列，跨渲染保持
   const poolRef = useRef<WordPair[]>([])
-  const aiRef = useRef(false) // 防止重复触发 AI
-
-  useEffect(() => {
-    if (localStorage.getItem('uc_spell') === '5566') setApiReady(true)
-  }, [])
+  const aiRef = useRef(false)
 
   const syncPool = () => setPoolSize(poolRef.current.length)
 
-  function activateSpell() {
-    if (spellInput === '5566') {
-      localStorage.setItem('uc_spell', '5566')
-      setApiReady(true)
-      setShowSpell(false)
-      setSpellInput('')
-    }
-  }
-
-  // 从本地词汇库取词
-  async function fetchLocalPairs(): Promise<WordPair[]> {
-    try {
-      const resp = await fetch('/api/cihui')
-      const data = await resp.json()
-      return data.pairs || []
-    } catch { return [] }
-  }
-
-  // 检查池子是否需要 AI 补充
+  // AI 补充词池
   const checkAndRefill = useCallback(() => {
-    if (!apiReady || aiRef.current) return
+    if (aiRef.current) return
     const need = POOL_MAX - poolRef.current.length
     if (need <= 0) return
     aiRef.current = true
     setAiLoading(true)
-    generateWords('', '', '', '5566')
+    generateWords()
       .then(pairs => {
         if (pairs && pairs.length > 0) {
           poolRef.current.push(...pairs.slice(0, need))
@@ -85,17 +63,16 @@ export default function UndercoverPage() {
       })
       .catch(() => {})
       .finally(() => { aiRef.current = false; setAiLoading(false) })
-  }, [apiReady])
+  }, [])
 
-  // 从池中取一组词，不够就补本地
-  async function popPair(): Promise<WordPair | null> {
+  // 从池中取词，池空从本地取
+  function popPair(): WordPair | null {
     if (poolRef.current.length > 0) {
       const pair = poolRef.current.shift()!
       syncPool()
       return pair
     }
-    // 池空了，紧急从本地取
-    const local = await fetchLocalPairs()
+    const local = pickLocal(2)
     if (local.length === 0) return null
     poolRef.current.push(...local)
     const pair = poolRef.current.shift()!
@@ -103,22 +80,21 @@ export default function UndercoverPage() {
     return pair
   }
 
-  // 开始游戏
-  async function handleStart() {
+  function handleStart() {
     setError('')
-    const pair = await popPair()
+    const pair = popPair()
     if (!pair) { setError('词汇库为空'); return }
     setCurrentPair(pair)
     assignWords(pair)
-    // 池子不够就补
     if (poolRef.current.length < POOL_LOW) checkAndRefill()
   }
 
-  // 换一组
   function nextPair() {
     if (poolRef.current.length === 0 && !aiLoading) {
+      // 池空了先从本地补几组
+      poolRef.current.push(...pickLocal(2))
+      syncPool()
       checkAndRefill()
-      return
     }
     const pair = poolRef.current.shift()
     if (!pair) return
@@ -157,7 +133,6 @@ export default function UndercoverPage() {
     setCurrentReveal(0)
     setRevealed(false)
     setError('')
-    // 池子不清空，跨局复用
   }
 
   const alivePlayers = players.filter(p => !p.eliminated)
@@ -167,33 +142,7 @@ export default function UndercoverPage() {
 
   return (
     <div className="p-5 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-5 mt-2">
-        <h1 className="text-2xl font-bold" style={{ color: S.primary }}>谁是卧底</h1>
-        <button
-          onClick={() => setShowSpell(true)}
-          className="text-sm px-2.5 py-1 rounded-full font-medium"
-          style={{
-            background: apiReady ? S.accentBg : S.tagBg,
-            color: apiReady ? '#5A9A5A' : S.muted,
-            border: `1px solid ${apiReady ? S.accentBorder : 'transparent'}`,
-          }}
-        >
-          {apiReady ? 'AI ✓' : 'AI ✗'}
-        </button>
-      </div>
-
-      {/* 咒语弹窗 */}
-      {showSpell && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-6" style={{ background: 'rgba(74,64,53,0.4)' }} onClick={() => setShowSpell(false)}>
-          <div className="card w-full max-w-xs" onClick={e => e.stopPropagation()}>
-            <h3 className="font-semibold mb-3 text-center" style={{ color: S.primary }}>输入咒语</h3>
-            <input className="form-input text-center text-lg mb-3" type="password" placeholder="····"
-              value={spellInput} onChange={e => setSpellInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && activateSpell()} autoFocus />
-            <button onClick={activateSpell} className="btn btn-primary w-full">激活</button>
-          </div>
-        </div>
-      )}
+      <h1 className="text-2xl font-bold mb-5 mt-2" style={{ color: S.primary }}>谁是卧底</h1>
 
       {error && (
         <div className="rounded-xl p-3 mb-4 text-sm" style={{ background: S.dangerBg, color: S.danger, border: `1px solid ${S.dangerBorder}` }}>{error}</div>
@@ -234,9 +183,9 @@ export default function UndercoverPage() {
               换一组词（池中剩余 {poolSize} 组{aiLoading ? '，AI补充中...' : ''}）
             </button>
           )}
-          {poolSize === 0 && !aiLoading && (
-            <button onClick={() => { checkAndRefill(); setTimeout(nextPair, 500) }} className="text-xs mb-3 font-medium" style={{ color: S.muted }}>
-              换一组词（正在补充...）
+          {poolSize === 0 && (
+            <button onClick={nextPair} className="text-xs mb-3 font-medium" style={{ color: S.accent }}>
+              换一组词
             </button>
           )}
           <div className="text-sm mb-4" style={{ color: S.secondary }}>
