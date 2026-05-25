@@ -1,17 +1,11 @@
-import type cloudbase from '@cloudbase/js-sdk'
+import { createClient } from '@supabase/supabase-js'
 
-let _db: ReturnType<ReturnType<typeof cloudbase.init>['database']> | null = null
+const supabaseUrl = 'https://bwnfstzluleyphtmzvh.supabase.co'
+const supabaseKey = 'sb_publishable_i5YtrqZwK-Ox2LjiBaNN5A_0WowPdq0'
 
-function getDb() {
-  if (_db) return _db
-  if (typeof window === 'undefined') return null
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const sdk = require('@cloudbase/js-sdk')
-  const app = sdk.default.init({ env: 'long-d0g1dx0nl38c1394f' })
-  app.auth({ persistence: 'local' }).anonymousSignIn()
-  _db = app.database()
-  return _db
-}
+export const supabase = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey)
+  : null
 
 // ===== 本地存储 =====
 const LOCAL_KEY = 'personal_app_data'
@@ -61,28 +55,22 @@ export type Project = {
 
 // ===== 项目 CRUD =====
 export async function getProjects(): Promise<Project[]> {
-  try {
-    const database = getDb()
-    if (!database) throw new Error('no db')
-    const res = await database.collection('projects').orderBy('updatedAt', 'desc').get()
-    if (res.data) return res.data
-  } catch {}
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('updatedAt', { ascending: false })
+    if (!error && data) return data
+  }
   return getLocalData().projects
 }
 
 export async function saveProject(project: Project): Promise<void> {
   project.updatedAt = new Date().toISOString()
-  try {
-    const database = getDb()
-    if (!database) throw new Error('no db')
-    const doc = database.collection('projects').doc(project.id)
-    const exist = await doc.get()
-    if (exist.data && exist.data.length > 0) {
-      await doc.set(project)
-    } else {
-      await database.collection('projects').add(project)
-    }
-  } catch {
+  if (supabase) {
+    const { error } = await supabase.from('projects').upsert(project)
+    if (error) throw error
+  } else {
     const data = getLocalData()
     const idx = data.projects.findIndex((p: Project) => p.id === project.id)
     if (idx >= 0) data.projects[idx] = project
@@ -92,11 +80,9 @@ export async function saveProject(project: Project): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  try {
-    const database = getDb()
-    if (!database) throw new Error('no db')
-    await database.collection('projects').doc(id).remove()
-  } catch {
+  if (supabase) {
+    await supabase.from('projects').delete().eq('id', id)
+  } else {
     const data = getLocalData()
     data.projects = data.projects.filter((p: Project) => p.id !== id)
     saveLocalData(data)
@@ -114,12 +100,13 @@ export type Journal = {
 }
 
 export async function getJournals(): Promise<Journal[]> {
-  try {
-    const database = getDb()
-    if (!database) throw new Error('no db')
-    const res = await database.collection('journals').orderBy('date', 'desc').get()
-    if (res.data) return res.data
-  } catch {}
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('journals')
+      .select('*')
+      .order('date', { ascending: false })
+    if (!error && data) return data
+  }
   return getLocalData().journals
 }
 
@@ -129,11 +116,10 @@ export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): P
     id: crypto.randomUUID(),
     created_at: new Date().toISOString(),
   }
-  try {
-    const database = getDb()
-    if (!database) throw new Error('no db')
-    await database.collection('journals').add(newJournal)
-  } catch {
+  if (supabase) {
+    const { error } = await supabase.from('journals').insert(newJournal)
+    if (error) throw error
+  } else {
     const data = getLocalData()
     data.journals.unshift(newJournal)
     saveLocalData(data)
@@ -142,11 +128,9 @@ export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): P
 }
 
 export async function deleteJournal(id: string) {
-  try {
-    const database = getDb()
-    if (!database) throw new Error('no db')
-    await database.collection('journals').doc(id).remove()
-  } catch {
+  if (supabase) {
+    await supabase.from('journals').delete().eq('id', id)
+  } else {
     const data = getLocalData()
     data.journals = data.journals.filter((j: Journal) => j.id !== id)
     saveLocalData(data)

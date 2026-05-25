@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   getProjects, saveProject, deleteProject,
   type Project, type Member, type Expense,
-} from '@/lib/cloudbase'
+} from '@/lib/supabase'
 
 // ===== 常量 =====
 const CATEGORIES = ['餐饮', '交通', '住宿', '门票', '购物', '娱乐', '其他']

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getJournals, addJournal, deleteJournal, type Journal } from '@/lib/cloudbase'
+import { getJournals, addJournal, deleteJournal, type Journal } from '@/lib/supabase'
 
 const S = {
   primary: '#4A4035',
