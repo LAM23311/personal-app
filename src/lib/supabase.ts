@@ -1,12 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'https://bwnfstzluleyphtmzvh.supabase.co'
-const supabaseKey = 'sb_publishable_i5YtrqZwK-Ox2LjiBaNN5A_0WowPdq0'
-
-export const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null
-
 // ===== 本地存储 =====
 const LOCAL_KEY = 'personal_app_data'
 
@@ -55,38 +46,22 @@ export type Project = {
 
 // ===== 项目 CRUD =====
 export async function getProjects(): Promise<Project[]> {
-  if (supabase) {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('updatedAt', { ascending: false })
-    if (!error && data) return data
-  }
   return getLocalData().projects
 }
 
 export async function saveProject(project: Project): Promise<void> {
   project.updatedAt = new Date().toISOString()
-  if (supabase) {
-    const { error } = await supabase.from('projects').upsert(project)
-    if (error) throw error
-  } else {
-    const data = getLocalData()
-    const idx = data.projects.findIndex((p: Project) => p.id === project.id)
-    if (idx >= 0) data.projects[idx] = project
-    else data.projects.unshift(project)
-    saveLocalData(data)
-  }
+  const data = getLocalData()
+  const idx = data.projects.findIndex((p: Project) => p.id === project.id)
+  if (idx >= 0) data.projects[idx] = project
+  else data.projects.unshift(project)
+  saveLocalData(data)
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  if (supabase) {
-    await supabase.from('projects').delete().eq('id', id)
-  } else {
-    const data = getLocalData()
-    data.projects = data.projects.filter((p: Project) => p.id !== id)
-    saveLocalData(data)
-  }
+  const data = getLocalData()
+  data.projects = data.projects.filter((p: Project) => p.id !== id)
+  saveLocalData(data)
 }
 
 // ===== 日志 CRUD =====
@@ -100,13 +75,6 @@ export type Journal = {
 }
 
 export async function getJournals(): Promise<Journal[]> {
-  if (supabase) {
-    const { data, error } = await supabase
-      .from('journals')
-      .select('*')
-      .order('date', { ascending: false })
-    if (!error && data) return data
-  }
   return getLocalData().journals
 }
 
@@ -116,23 +84,14 @@ export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): P
     id: crypto.randomUUID(),
     created_at: new Date().toISOString(),
   }
-  if (supabase) {
-    const { error } = await supabase.from('journals').insert(newJournal)
-    if (error) throw error
-  } else {
-    const data = getLocalData()
-    data.journals.unshift(newJournal)
-    saveLocalData(data)
-  }
+  const data = getLocalData()
+  data.journals.unshift(newJournal)
+  saveLocalData(data)
   return newJournal
 }
 
 export async function deleteJournal(id: string) {
-  if (supabase) {
-    await supabase.from('journals').delete().eq('id', id)
-  } else {
-    const data = getLocalData()
-    data.journals = data.journals.filter((j: Journal) => j.id !== id)
-    saveLocalData(data)
-  }
+  const data = getLocalData()
+  data.journals = data.journals.filter((j: Journal) => j.id !== id)
+  saveLocalData(data)
 }
