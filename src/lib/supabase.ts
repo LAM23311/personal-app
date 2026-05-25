@@ -1,3 +1,6 @@
+// API 地址 — 部署云函数后替换为你的 API Gateway 地址
+const API_BASE = ''
+
 // ===== 本地存储 =====
 const LOCAL_KEY = 'personal_app_data'
 
@@ -46,11 +49,27 @@ export type Project = {
 
 // ===== 项目 CRUD =====
 export async function getProjects(): Promise<Project[]> {
+  if (API_BASE) {
+    try {
+      const res = await fetch(`${API_BASE}/projects`)
+      if (res.ok) return await res.json()
+    } catch {}
+  }
   return getLocalData().projects
 }
 
 export async function saveProject(project: Project): Promise<void> {
   project.updatedAt = new Date().toISOString()
+  if (API_BASE) {
+    try {
+      await fetch(`${API_BASE}/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(project),
+      })
+      return
+    } catch {}
+  }
   const data = getLocalData()
   const idx = data.projects.findIndex((p: Project) => p.id === project.id)
   if (idx >= 0) data.projects[idx] = project
@@ -59,6 +78,12 @@ export async function saveProject(project: Project): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
+  if (API_BASE) {
+    try {
+      await fetch(`${API_BASE}/projects/${id}`, { method: 'DELETE' })
+      return
+    } catch {}
+  }
   const data = getLocalData()
   data.projects = data.projects.filter((p: Project) => p.id !== id)
   saveLocalData(data)
@@ -75,6 +100,12 @@ export type Journal = {
 }
 
 export async function getJournals(): Promise<Journal[]> {
+  if (API_BASE) {
+    try {
+      const res = await fetch(`${API_BASE}/journals`)
+      if (res.ok) return await res.json()
+    } catch {}
+  }
   return getLocalData().journals
 }
 
@@ -84,6 +115,16 @@ export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): P
     id: crypto.randomUUID(),
     created_at: new Date().toISOString(),
   }
+  if (API_BASE) {
+    try {
+      await fetch(`${API_BASE}/journals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newJournal),
+      })
+      return newJournal
+    } catch {}
+  }
   const data = getLocalData()
   data.journals.unshift(newJournal)
   saveLocalData(data)
@@ -91,6 +132,12 @@ export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): P
 }
 
 export async function deleteJournal(id: string) {
+  if (API_BASE) {
+    try {
+      await fetch(`${API_BASE}/journals/${id}`, { method: 'DELETE' })
+      return
+    } catch {}
+  }
   const data = getLocalData()
   data.journals = data.journals.filter((j: Journal) => j.id !== id)
   saveLocalData(data)
