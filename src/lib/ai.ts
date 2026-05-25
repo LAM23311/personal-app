@@ -1,5 +1,5 @@
 // 谁是卧底 AI 选词
-export async function generateWords(apiKey: string, apiBase: string, model: string): Promise<{
+export async function generateWords(apiKey: string, apiBase: string, model: string, magicWord?: string): Promise<{
   wordA: string
   wordB: string
   category: string
@@ -16,10 +16,13 @@ export async function generateWords(apiKey: string, apiBase: string, model: stri
 {"wordA":"医生","wordB":"护士","category":"职业"}
 {"wordA":"跑步","wordB":"散步","category":"运动"}`
 
+  const body: any = { prompt, apiKey, apiBase, model }
+  if (magicWord) body.magicWord = magicWord
+
   const resp = await fetch('/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, apiKey, apiBase, model }),
+    body: JSON.stringify(body),
   })
 
   if (!resp.ok) throw new Error('AI调用失败')

@@ -2,20 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, apiKey, apiBase, model } = await req.json()
+    const { prompt, apiKey, apiBase, model, magicWord } = await req.json()
 
-    if (!apiKey || !apiBase || !model) {
+    let finalKey = apiKey
+    let finalBase = apiBase
+    let finalModel = model
+
+    // 咒语模式：输入 5566 使用内置 API
+    if (magicWord === '5566') {
+      finalKey = process.env.BUILTIN_AI_KEY
+      finalBase = process.env.BUILTIN_AI_BASE
+      finalModel = process.env.BUILTIN_AI_MODEL
+    }
+
+    if (!finalKey || !finalBase || !finalModel) {
       return NextResponse.json({ error: '缺少API配置' }, { status: 400 })
     }
 
-    const resp = await fetch(`${apiBase}/chat/completions`, {
+    const resp = await fetch(`${finalBase}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${finalKey}`,
       },
       body: JSON.stringify({
-        model,
+        model: finalModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
         max_tokens: 500,

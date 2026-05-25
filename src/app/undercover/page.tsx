@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { generateWords } from '@/lib/ai'
 
 type Phase = 'setup' | 'words' | 'reveal' | 'playing' | 'result'
@@ -13,11 +13,10 @@ type Player = {
 }
 
 export default function UndercoverPage() {
-  // API 设置
-  const [apiKey, setApiKey] = useState('')
-  const [apiBase, setApiBase] = useState('')
-  const [model, setModel] = useState('')
-  const [showSettings, setShowSettings] = useState(false)
+  // 咒语激活
+  const [apiReady, setApiReady] = useState(false)
+  const [showSpell, setShowSpell] = useState(false)
+  const [spellInput, setSpellInput] = useState('')
 
   // 游戏状态
   const [phase, setPhase] = useState<Phase>('setup')
@@ -34,33 +33,30 @@ export default function UndercoverPage() {
 
   // 加载设置
   useEffect(() => {
-    const saved = localStorage.getItem('uc_settings')
-    if (saved) {
-      try {
-        const s = JSON.parse(saved)
-        setApiKey(s.apiKey || '')
-        setApiBase(s.apiBase || '')
-        setModel(s.model || '')
-      } catch {}
+    if (localStorage.getItem('uc_spell') === '5566') {
+      setApiReady(true)
     }
   }, [])
 
-  function saveSettings() {
-    localStorage.setItem('uc_settings', JSON.stringify({ apiKey, apiBase, model }))
-    setShowSettings(false)
+  function activateSpell() {
+    if (spellInput === '5566') {
+      localStorage.setItem('uc_spell', '5566')
+      setApiReady(true)
+      setShowSpell(false)
+      setSpellInput('')
+    }
   }
 
   // 生成词语
   async function handleGenerate() {
-    if (!apiKey || !apiBase || !model) {
-      setShowSettings(true)
-      setError('请先配置API设置')
+    if (!apiReady) {
+      setShowSpell(true)
       return
     }
     setLoading(true)
     setError('')
     try {
-      const words = await generateWords(apiKey, apiBase, model)
+      const words = await generateWords('', '', '', '5566')
       setWordA(words.wordA)
       setWordB(words.wordB)
       setCategory(words.category)
@@ -148,30 +144,29 @@ export default function UndercoverPage() {
       <div className="flex items-center justify-between mb-4 mt-2">
         <h1 className="text-2xl font-bold">谁是卧底</h1>
         <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="text-gray-400 hover:text-gray-600 p-1"
+          onClick={() => setShowSpell(true)}
+          className={`text-sm px-2 py-1 rounded-full ${apiReady ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'}`}
         >
-          ⚙️
+          {apiReady ? 'AI ✓' : 'AI ✗'}
         </button>
       </div>
 
-      {/* API 设置 */}
-      {showSettings && (
-        <div className="card mb-4">
-          <h3 className="font-semibold mb-3">API 设置</h3>
-          <div className="form-group">
-            <label className="form-label">API Key</label>
-            <input className="form-input" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-..." />
+      {/* 咒语弹窗 */}
+      {showSpell && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6" onClick={() => setShowSpell(false)}>
+          <div className="card w-full max-w-xs" onClick={e => e.stopPropagation()}>
+            <h3 className="font-semibold mb-3 text-center">输入咒语</h3>
+            <input
+              className="form-input text-center text-lg mb-3"
+              type="password"
+              placeholder="····"
+              value={spellInput}
+              onChange={e => setSpellInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && activateSpell()}
+              autoFocus
+            />
+            <button onClick={activateSpell} className="btn btn-primary w-full">激活</button>
           </div>
-          <div className="form-group">
-            <label className="form-label">API Base</label>
-            <input className="form-input" value={apiBase} onChange={e => setApiBase(e.target.value)} placeholder="https://api.openai.com/v1" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">模型</label>
-            <input className="form-input" value={model} onChange={e => setModel(e.target.value)} placeholder="gpt-4o-mini" />
-          </div>
-          <button onClick={saveSettings} className="btn btn-primary w-full">保存设置</button>
         </div>
       )}
 
@@ -202,7 +197,7 @@ export default function UndercoverPage() {
           </div>
 
           <button onClick={handleGenerate} disabled={loading} className="btn btn-primary w-full mt-2">
-            {loading ? '生成中...' : '生成词语'}
+            {loading ? '生成中...' : !apiReady ? '点击激活AI' : '生成词语'}
           </button>
         </div>
       )}
