@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f9fafb;
+  --foreground: #111827;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* iPhone 安全区 */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* 禁止长按菜单 */
+* {
+  -webkit-touch-callout: none;
+}
+
+/* 输入框在 iOS 上的样式 */
+input, textarea, select {
+  -webkit-appearance: none;
+  border-radius: 8px;
+}
+
+/* 滚动区域 */
+.scroll-y {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 卡片 */
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 16px;
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.15s;
+  border: none;
+  cursor: pointer;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: #3b82f6; color: white; }
+.btn-primary:hover { background: #2563eb; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-danger:hover { background: #dc2626; }
+.btn-ghost { background: transparent; color: #3b82f6; }
+
+/* 表单 */
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 16px;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus { border-color: #3b82f6; background: white; }

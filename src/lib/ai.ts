@@ -1,0 +1,36 @@
+// 谁是卧底 AI 选词
+export async function generateWords(apiKey: string, apiBase: string, model: string): Promise<{
+  wordA: string
+  wordB: string
+  category: string
+}> {
+  const prompt = `请为"谁是卧底"游戏生成一对词语。要求：
+1. 两个词语非常相似，容易混淆，但有明显区别
+2. 一个是平民词，一个是卧底词
+3. 输出JSON格式：{"wordA":"平民词","wordB":"卧底词","category":"类别"}
+4. 词语必须是中文常见词，不能太生僻
+5. 只输出JSON，不要其他内容
+
+示例：
+{"wordA":"苹果","wordB":"梨子","category":"水果"}
+{"wordA":"医生","wordB":"护士","category":"职业"}
+{"wordA":"跑步","wordB":"散步","category":"运动"}`
+
+  const resp = await fetch('/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, apiKey, apiBase, model }),
+  })
+
+  if (!resp.ok) throw new Error('AI调用失败')
+  const data = await resp.json()
+  const text = data.result.trim()
+
+  try {
+    const jsonMatch = text.match(/\{[^}]+\}/)
+    if (jsonMatch) return JSON.parse(jsonMatch[0])
+    return JSON.parse(text)
+  } catch {
+    throw new Error('AI返回格式错误: ' + text)
+  }
+}
