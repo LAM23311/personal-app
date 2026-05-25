@@ -14,6 +14,17 @@ const CATEGORIES = [
   { icon: '📦', label: '其他' },
 ]
 
+const S = {
+  primary: '#4A4035',
+  secondary: '#8A7F73',
+  muted: '#B0A899',
+  accent: '#8FBF8F',
+  accentBg: 'rgba(143,191,143,0.1)',
+  accentBorder: 'rgba(143,191,143,0.4)',
+  danger: '#D4766A',
+  tagBg: '#EDE7DB',
+}
+
 export default function ExpensePage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [amount, setAmount] = useState('')
@@ -50,7 +61,6 @@ export default function ExpensePage() {
     await loadExpenses()
   }
 
-  // 按月分组
   const grouped = expenses.reduce<Record<string, Expense[]>>((acc, e) => {
     const month = e.date.slice(0, 7)
     if (!acc[month]) acc[month] = []
@@ -58,7 +68,6 @@ export default function ExpensePage() {
     return acc
   }, {})
 
-  // 本月统计
   const thisMonth = new Date().toISOString().slice(0, 7)
   const monthTotal = expenses
     .filter(e => e.date.startsWith(thisMonth))
@@ -72,12 +81,12 @@ export default function ExpensePage() {
     }, {})
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-4 mt-2">
-        <h1 className="text-2xl font-bold">记账</h1>
+    <div className="p-5 max-w-lg mx-auto">
+      <div className="flex items-center justify-between mb-5 mt-2">
+        <h1 className="text-2xl font-bold" style={{ color: S.primary }}>记账</h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn btn-primary text-lg w-10 h-10 rounded-full p-0"
+          className="btn btn-primary w-10 h-10 rounded-full p-0 text-xl leading-none"
         >
           {showForm ? '✕' : '+'}
         </button>
@@ -85,8 +94,8 @@ export default function ExpensePage() {
 
       {/* 本月概览 */}
       <div className="card mb-4">
-        <div className="text-sm text-gray-500 mb-1">本月支出</div>
-        <div className="text-3xl font-bold text-red-500">¥{monthTotal.toFixed(2)}</div>
+        <div className="text-sm mb-1" style={{ color: S.secondary }}>本月支出</div>
+        <div className="text-3xl font-bold" style={{ color: S.danger }}>¥{monthTotal.toFixed(2)}</div>
         {Object.keys(categoryTotals).length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {Object.entries(categoryTotals)
@@ -94,7 +103,7 @@ export default function ExpensePage() {
               .map(([cat, total]) => {
                 const catInfo = CATEGORIES.find(c => c.label === cat)
                 return (
-                  <span key={cat} className="text-xs bg-gray-100 rounded-full px-2 py-1">
+                  <span key={cat} className="text-xs rounded-full px-2.5 py-1" style={{ background: S.tagBg, color: S.secondary }}>
                     {catInfo?.icon} {cat} ¥{total.toFixed(0)}
                   </span>
                 )
@@ -126,14 +135,15 @@ export default function ExpensePage() {
                 <button
                   key={c.label}
                   onClick={() => setCategory(c.label)}
-                  className={`flex flex-col items-center py-2 rounded-lg text-xs transition-all ${
-                    category === c.label
-                      ? 'bg-blue-50 border-2 border-blue-400 text-blue-600'
-                      : 'bg-gray-50 border-2 border-transparent'
-                  }`}
+                  className="flex flex-col items-center py-2.5 rounded-xl text-xs transition-all"
+                  style={{
+                    background: category === c.label ? S.accentBg : 'rgba(0,0,0,0.02)',
+                    border: `2px solid ${category === c.label ? S.accentBorder : 'transparent'}`,
+                    color: category === c.label ? '#5A9A5A' : S.secondary,
+                  }}
                 >
                   <span className="text-xl">{c.icon}</span>
-                  <span className="mt-1">{c.label}</span>
+                  <span className="mt-1 font-medium">{c.label}</span>
                 </button>
               ))}
             </div>
@@ -159,40 +169,43 @@ export default function ExpensePage() {
             />
           </div>
 
-          <button onClick={handleAdd} className="btn btn-primary w-full">
-            保存
-          </button>
+          <button onClick={handleAdd} className="btn btn-primary w-full">保存</button>
         </div>
       )}
 
       {/* 账单列表 */}
       {loading ? (
-        <div className="text-center text-gray-400 py-8">加载中...</div>
+        <div className="text-center py-8" style={{ color: S.muted }}>加载中...</div>
       ) : expenses.length === 0 ? (
-        <div className="text-center text-gray-400 py-8">暂无记录，点击 + 添加</div>
+        <div className="text-center py-8" style={{ color: S.muted }}>暂无记录，点击 + 添加</div>
       ) : (
         Object.entries(grouped).map(([month, items]) => (
           <div key={month} className="mb-4">
-            <div className="text-sm font-semibold text-gray-500 mb-2 px-1">
+            <div className="text-sm font-semibold mb-2 px-1" style={{ color: S.secondary }}>
               {month} · 合计 ¥{items.reduce((s, e) => s + e.amount, 0).toFixed(2)}
             </div>
-            <div className="card p-0 divide-y divide-gray-100">
-              {items.map(e => {
+            <div className="card p-0" style={{ overflow: 'hidden' }}>
+              {items.map((e, i) => {
                 const catInfo = CATEGORIES.find(c => c.label === e.category)
                 return (
-                  <div key={e.id} className="flex items-center px-4 py-3">
+                  <div
+                    key={e.id}
+                    className="flex items-center px-4 py-3"
+                    style={{ borderBottom: i < items.length - 1 ? '1px solid #EDE7DB' : 'none' }}
+                  >
                     <span className="text-2xl mr-3">{catInfo?.icon || '📦'}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm">{e.category}</div>
-                      {e.note && <div className="text-xs text-gray-400 truncate">{e.note}</div>}
+                      <div className="font-medium text-sm" style={{ color: S.primary }}>{e.category}</div>
+                      {e.note && <div className="text-xs truncate" style={{ color: S.muted }}>{e.note}</div>}
                     </div>
                     <div className="text-right mr-2">
-                      <div className="font-bold text-red-500">-¥{e.amount.toFixed(2)}</div>
-                      <div className="text-xs text-gray-400">{e.date.slice(5)}</div>
+                      <div className="font-bold" style={{ color: S.danger }}>-¥{e.amount.toFixed(2)}</div>
+                      <div className="text-xs" style={{ color: S.muted }}>{e.date.slice(5)}</div>
                     </div>
                     <button
                       onClick={() => handleDelete(e.id)}
-                      className="text-gray-300 hover:text-red-400 active:text-red-500 text-lg px-1"
+                      className="text-lg px-1 transition-colors"
+                      style={{ color: S.muted }}
                     >
                       ×
                     </button>

@@ -1,16 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
+  --bg: #F5F0E6;
+  --bg-card-from: #FFF9F0;
+  --bg-card-to: #F0E8D8;
+  --bg-nav: #F0E8D8;
+  --text-primary: #4A4035;
+  --text-secondary: #8A7F73;
+  --text-muted: #B0A899;
+  --accent: #8FBF8F;
+  --accent-dark: #6FA56F;
+  --danger: #D47B6A;
+  --danger-dark: #C0604E;
+  --blue: #7BA7C9;
+  --blue-dark: #5E8FB5;
+  --border: #E8E0D2;
+  --shadow: rgba(120, 100, 70, 0.08);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+  /* 亚麻纹理 */
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='6' height='6' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 /* iPhone 安全区 */
@@ -23,10 +38,10 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* 输入框在 iOS 上的样式 */
+/* 输入框 */
 input, textarea, select {
   -webkit-appearance: none;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 /* 滚动区域 */
@@ -35,45 +50,78 @@ input, textarea, select {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 卡片 */
+/* ===== 卡片 ===== */
 .card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: linear-gradient(165deg, var(--bg-card-from) 0%, var(--bg-card-to) 100%);
+  border-radius: 20px;
+  box-shadow:
+    0 2px 8px var(--shadow),
+    0 1px 3px rgba(120, 100, 70, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-/* 按钮 */
+/* ===== 按钮 ===== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 11px 22px;
+  border-radius: 14px;
   font-weight: 600;
   font-size: 15px;
   transition: all 0.15s;
   border: none;
   cursor: pointer;
 }
-.btn:active { transform: scale(0.97); }
-.btn-primary { background: #3b82f6; color: white; }
-.btn-primary:hover { background: #2563eb; }
-.btn-danger { background: #ef4444; color: white; }
-.btn-danger:hover { background: #dc2626; }
-.btn-ghost { background: transparent; color: #3b82f6; }
+.btn:active { transform: scale(0.96); }
 
-/* 表单 */
-.form-group { margin-bottom: 12px; }
-.form-label { display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
+.btn-primary {
+  background: linear-gradient(165deg, #9CCF9C 0%, var(--accent) 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(143, 191, 143, 0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+.btn-primary:hover { background: linear-gradient(165deg, #8FBF8F 0%, var(--accent-dark) 100%); }
+
+.btn-danger {
+  background: linear-gradient(165deg, #E08E7F 0%, var(--danger) 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(212, 123, 106, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-danger:hover { background: linear-gradient(165deg, #D47B6A 0%, var(--danger-dark) 100%); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--accent-dark);
+}
+.btn-ghost:hover { background: rgba(143, 191, 143, 0.08); }
+
+/* ===== 表单 ===== */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
 .form-input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
   font-size: 16px;
-  background: #fafafa;
+  background: linear-gradient(165deg, #FEFCF8 0%, #F8F2E8 100%);
+  color: var(--text-primary);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 3px rgba(120, 100, 70, 0.05);
 }
-.form-input:focus { border-color: #3b82f6; background: white; }
+.form-input:focus {
+  border-color: var(--accent);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(143, 191, 143, 0.15), inset 0 1px 3px rgba(120, 100, 70, 0.03);
+}
+.form-input::placeholder { color: var(--text-muted); }

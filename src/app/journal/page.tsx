@@ -3,6 +3,17 @@
 import { useState, useEffect } from 'react'
 import { getJournals, addJournal, deleteJournal, type Journal } from '@/lib/supabase'
 
+const S = {
+  primary: '#4A4035',
+  secondary: '#8A7F73',
+  muted: '#B0A899',
+  accent: '#8FBF8F',
+  accentBg: 'rgba(143,191,143,0.1)',
+  tagBg: '#EDE7DB',
+  blue: '#7BA7C9',
+  blueBg: 'rgba(123,167,201,0.1)',
+}
+
 export default function JournalPage() {
   const [journals, setJournals] = useState<Journal[]>([])
   const [title, setTitle] = useState('')
@@ -46,18 +57,17 @@ export default function JournalPage() {
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-4 mt-2">
-        <h1 className="text-2xl font-bold">日志</h1>
+    <div className="p-5 max-w-lg mx-auto">
+      <div className="flex items-center justify-between mb-5 mt-2">
+        <h1 className="text-2xl font-bold" style={{ color: S.primary }}>日志</h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn btn-primary text-lg w-10 h-10 rounded-full p-0"
+          className="btn btn-primary w-10 h-10 rounded-full p-0 text-xl leading-none"
         >
           {showForm ? '✕' : '+'}
         </button>
       </div>
 
-      {/* 添加表单 */}
       {showForm && (
         <div className="card mb-4">
           <div className="form-group">
@@ -103,17 +113,14 @@ export default function JournalPage() {
             />
           </div>
 
-          <button onClick={handleAdd} className="btn btn-primary w-full">
-            保存
-          </button>
+          <button onClick={handleAdd} className="btn btn-primary w-full">保存</button>
         </div>
       )}
 
-      {/* 日志列表 */}
       {loading ? (
-        <div className="text-center text-gray-400 py-8">加载中...</div>
+        <div className="text-center py-8" style={{ color: S.muted }}>加载中...</div>
       ) : journals.length === 0 ? (
-        <div className="text-center text-gray-400 py-8">暂无日志，点击 + 写一篇</div>
+        <div className="text-center py-8" style={{ color: S.muted }}>暂无日志，点击 + 写一篇</div>
       ) : (
         journals.map(j => {
           const isLong = j.content.length > 150
@@ -122,21 +129,23 @@ export default function JournalPage() {
             <div key={j.id} className="card mb-3">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="font-bold text-base">{j.title}</h3>
-                  <span className="text-xs text-gray-400">{j.date}</span>
+                  <h3 className="font-bold text-base" style={{ color: S.primary }}>{j.title}</h3>
+                  <span className="text-xs" style={{ color: S.muted }}>{j.date}</span>
                 </div>
                 <button
                   onClick={() => handleDelete(j.id)}
-                  className="text-gray-300 hover:text-red-400 active:text-red-500 text-lg px-1 -mr-1"
+                  className="text-lg px-1 -mr-1 transition-colors"
+                  style={{ color: S.muted }}
                 >
                   ×
                 </button>
               </div>
 
               <p
-                className={`text-sm text-gray-700 whitespace-pre-wrap leading-relaxed ${
+                className={`text-sm whitespace-pre-wrap leading-relaxed ${
                   isLong && !isExpanded ? 'line-clamp-4' : ''
                 }`}
+                style={{ color: '#5C5348' }}
               >
                 {j.content}
               </p>
@@ -144,16 +153,17 @@ export default function JournalPage() {
               {isLong && (
                 <button
                   onClick={() => toggleExpand(j.id)}
-                  className="text-blue-500 text-xs mt-1"
+                  className="text-xs mt-1 font-medium"
+                  style={{ color: S.accent }}
                 >
                   {isExpanded ? '收起' : '展开全文'}
                 </button>
               )}
 
               {j.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
                   {j.tags.map(tag => (
-                    <span key={tag} className="text-xs bg-blue-50 text-blue-600 rounded-full px-2 py-0.5">
+                    <span key={tag} className="text-xs rounded-full px-2.5 py-0.5 font-medium" style={{ background: S.blueBg, color: S.blue }}>
                       #{tag}
                     </span>
                   ))}
