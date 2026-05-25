@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { generateWords } from '@/lib/ai'
 
 type Phase = 'setup' | 'reveal' | 'playing' | 'result'
@@ -26,6 +26,7 @@ export default function UndercoverPage() {
   const [apiReady, setApiReady] = useState(false)
   const [showSpell, setShowSpell] = useState(false)
   const [spellInput, setSpellInput] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
 
   const [phase, setPhase] = useState<Phase>('setup')
   const [playerCount, setPlayerCount] = useState(4)
@@ -35,8 +36,10 @@ export default function UndercoverPage() {
   const [players, setPlayers] = useState<Player[]>([])
   const [currentReveal, setCurrentReveal] = useState(0)
   const [revealed, setRevealed] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const poolRef = useRef<WordPair[]>([])
+  poolRef.current = wordPool
 
   const currentPair = wordPool[poolIndex] || null
 
@@ -53,26 +56,47 @@ export default function UndercoverPage() {
     }
   }
 
-  async function fetchWordPool() {
-    setLoading(true)
-    setError('')
+  // 从本地词汇库取词
+  async function fetchLocalPairs(): Promise<WordPair[]> {
     try {
-      const pairs = await generateWords('', '', '', '5566')
-      setWordPool(pairs)
-      setPoolIndex(0)
-      return pairs
-    } catch (e: any) {
-      setError(e.message)
-      return null
-    } finally {
-      setLoading(false)
+      const resp = await fetch('/api/cihui')
+      const data = await resp.json()
+      return data.pairs || []
+    } catch {
+      return []
     }
   }
 
+  // 后台生成 AI 词汇，追加到词池
+  function generateAiInBackground() {
+    setAiLoading(true)
+    generateWords('', '', '', '5566')
+      .then(pairs => {
+        if (pairs && pairs.length > 0) {
+          setWordPool(prev => [...prev, ...pairs])
+        }
+      })
+      .catch(() => {})
+      .finally(() => setAiLoading(false))
+  }
+
+  // 开始游戏：本地取2组立即用，AI后台补充8组
   async function handleStart() {
-    if (!apiReady) { setShowSpell(true); return }
-    const pairs = await fetchWordPool()
-    if (pairs && pairs.length > 0) assignWords(pairs[0])
+    setError('')
+    const localPairs = await fetchLocalPairs()
+    if (localPairs.length === 0) {
+      setError('本地词汇库为空')
+      return
+    }
+    const initial = localPairs.slice(0, 2)
+    setWordPool(initial)
+    setPoolIndex(0)
+    assignWords(initial[0])
+
+    // AI 后台补充
+    if (apiReady) {
+      generateAiInBackground()
+    }
   }
 
   function nextPair() {
@@ -112,6 +136,8 @@ export default function UndercoverPage() {
     setCurrentReveal(0)
     setRevealed(false)
     setError('')
+    setWordPool([])
+    setPoolIndex(0)
   }
 
   const alivePlayers = players.filter(p => !p.eliminated)
@@ -178,9 +204,12 @@ export default function UndercoverPage() {
               <button onClick={() => setUndercoverCount(Math.min(playerCount - 2, undercoverCount + 1))} className="btn btn-ghost text-xl px-3">+</button>
             </div>
           </div>
-          <button onClick={handleStart} disabled={loading} className="btn btn-primary w-full mt-2">
-            {loading ? '生成中...' : !apiReady ? '点击激活AI' : '开始游戏'}
+          <button onClick={handleStart} className="btn btn-primary w-full mt-2">
+            开始游戏
           </button>
+          {!apiReady && (
+            <p className="text-xs text-center mt-2" style={{ color: S.muted }}>未激活AI，使用本地词库（{wordPool.length > 0 ? wordPool.length : '??'}组）</p>
+          )}
         </div>
       )}
 
@@ -189,8 +218,11 @@ export default function UndercoverPage() {
         <div className="text-center">
           {poolIndex < wordPool.length - 1 && (
             <button onClick={nextPair} className="text-xs mb-3 font-medium" style={{ color: S.accent }}>
-              换一组词（剩余 {wordPool.length - poolIndex - 1} 组）
+              换一组词（剩余 {wordPool.length - poolIndex - 1} 组{aiLoading ? '，AI补充中...' : ''}）
             </button>
+          )}
+          {poolIndex >= wordPool.length - 1 && aiLoading && (
+            <div className="text-xs mb-3" style={{ color: S.muted }}>AI正在补充词汇...</div>
           )}
           <div className="text-sm mb-4" style={{ color: S.secondary }}>
             请把手机递给 玩家 {players[currentReveal]?.id}
