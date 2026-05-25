@@ -8,6 +8,7 @@ function getDb() {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const sdk = require('@cloudbase/js-sdk')
   const app = sdk.default.init({ env: 'long-d0g1dx0nl38c1394f' })
+  app.auth({ persistence: 'local' }).anonymousSignIn()
   _db = app.database()
   return _db
 }
