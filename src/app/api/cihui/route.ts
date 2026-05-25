@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import CIHUI from '@/lib/cihui-data'
 
+export const runtime = 'edge'
+
 export async function GET() {
   const count = 2
   const shuffled = [...CIHUI].sort(() => Math.random() - 0.5)
