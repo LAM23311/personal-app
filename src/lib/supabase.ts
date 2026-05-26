@@ -1,9 +1,20 @@
 // GitHub 仓库存储
-const GH_TOKEN = atob('Z2hwX2phd0d5UEhFRU9vU2NDSktSTWRZbUlua0RlYXE1NjFjMW9ETg==')
-const GH_OWNER = 'LAM23311'
-const GH_REPO = 'personal-app'
+// Token 从 public/config.js 读取（window.__APP_CONFIG__）
+let GH_TOKEN = ''
+let GH_OWNER = 'LAM23311'
+let GH_REPO = 'personal-app'
 const GH_BRANCH = 'master'
 const GH_FILE = 'data.json'
+
+function initConfig() {
+  if (typeof window === 'undefined') return
+  const w = window as any
+  if (w.__APP_CONFIG__ && !GH_TOKEN) {
+    GH_TOKEN = w.__APP_CONFIG__.token || ''
+    GH_OWNER = w.__APP_CONFIG__.owner || GH_OWNER
+    GH_REPO = w.__APP_CONFIG__.repo || GH_REPO
+  }
+}
 
 // ===== 本地存储降级 =====
 const LOCAL_KEY = 'personal_app_data'
@@ -27,6 +38,7 @@ function saveLocalData(data: any) {
 let fileSha: string | null = null
 
 async function ghFetch(path: string, options: RequestInit = {}) {
+  initConfig()
   const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}${path}`, {
     ...options,
     headers: {
@@ -41,6 +53,8 @@ async function ghFetch(path: string, options: RequestInit = {}) {
 
 async function loadData(): Promise<any> {
   try {
+    initConfig()
+    if (!GH_TOKEN) throw new Error('no token')
     const res = await ghFetch(`/contents/${GH_FILE}`)
     if (res.ok) {
       const file = await res.json()
