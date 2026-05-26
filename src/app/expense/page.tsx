@@ -114,6 +114,8 @@ export default function ExpensePage() {
   const [newProjectName, setNewProjectName] = useState('')
   const [editProjectName, setEditProjectName] = useState('')
   const [showRenameProject, setShowRenameProject] = useState(false)
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null)
+  const [deleteProjectInput, setDeleteProjectInput] = useState('')
 
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [editMember, setEditMember] = useState<Member | null>(null)
@@ -352,7 +354,7 @@ export default function ExpensePage() {
         <span className="font-bold text-lg" style={{ color: '#4A4035' }}>{activeProject?.name}</span>
         <button onClick={() => { setEditProjectName(activeProject!.name); setShowRenameProject(true) }}
           className="text-xs px-2 py-0.5 rounded" style={{ background: '#EDE7DB', color: '#8A7F73' }}>重命名</button>
-        <button onClick={() => { if (confirm('确定删除此项目？')) removeProject(activeProject!.id) }}
+        <button onClick={() => { setDeleteProjectId(activeProject!.id); setDeleteProjectInput('') }}
           className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(212,118,106,0.1)', color: '#D4766A' }}>删除</button>
         <div className="ml-auto flex gap-1">
           <button onClick={() => exportTXT(activeProject!)} className="text-xs px-2 py-1 rounded" style={{ background: '#EDE7DB', color: '#8A7F73' }}>导出TXT</button>
@@ -519,6 +521,33 @@ export default function ExpensePage() {
       </div>
 
       {/* ===== 弹窗们 ===== */}
+
+      {/* 删除项目确认 */}
+      {deleteProjectId && (
+        <Modal onClose={() => setDeleteProjectId(null)}>
+          <h3 className="font-semibold mb-2" style={{ color: '#4A4035' }}>删除项目</h3>
+          <p className="text-sm mb-3" style={{ color: '#D4766A' }}>此操作不可恢复！</p>
+          <p className="text-xs mb-3" style={{ color: '#8A7F73' }}>输入 <span className="font-bold" style={{ color: '#4A4035' }}>321</span> 确认删除</p>
+          <input
+            className="form-input mb-3"
+            placeholder="输入 321"
+            value={deleteProjectInput}
+            onChange={e => setDeleteProjectInput(e.target.value)}
+            inputMode="numeric"
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <button onClick={() => setDeleteProjectId(null)} className="btn btn-ghost flex-1">取消</button>
+            <button
+              onClick={() => { if (deleteProjectInput === '321') { removeProject(deleteProjectId); setDeleteProjectId(null) } }}
+              className="btn btn-danger flex-1"
+              style={{ opacity: deleteProjectInput === '321' ? 1 : 0.4 }}
+            >
+              确认删除
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {/* 重命名项目 */}
       {showRenameProject && (
