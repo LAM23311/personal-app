@@ -415,9 +415,13 @@ export default function ExpensePage() {
                             </div>
                             <div className="text-xs" style={{ color: '#B0A899' }}>分摊: {splitNames}</div>
                           </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEditExpense(e)} className="text-xs px-1" style={{ color: '#8A7F73' }}>编辑</button>
-                            <button onClick={() => setDeleteExpConfirm(e.id)} className="text-xs px-1" style={{ color: '#D4766A' }}>删除</button>
+                          <div className="flex gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openEditExpense(e)} className="p-1.5 rounded-md transition-colors active:scale-90" style={{ color: '#8A7F73' }}>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            </button>
+                            <button onClick={() => setDeleteExpConfirm(e.id)} className="p-1.5 rounded-md transition-colors active:scale-90" style={{ color: '#D4766A' }}>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
                           </div>
                         </div>
                       </div>
