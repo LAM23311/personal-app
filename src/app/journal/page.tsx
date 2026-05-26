@@ -23,6 +23,8 @@ export default function JournalPage() {
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [deleteJournalId, setDeleteJournalId] = useState<string | null>(null)
+  const [deleteJournalInput, setDeleteJournalInput] = useState('')
 
   useEffect(() => {
     loadJournals()
@@ -133,7 +135,7 @@ export default function JournalPage() {
                   <span className="text-xs" style={{ color: S.muted }}>{j.date}</span>
                 </div>
                 <button
-                  onClick={() => handleDelete(j.id)}
+                  onClick={() => { setDeleteJournalId(j.id); setDeleteJournalInput('') }}
                   className="text-lg px-1 -mr-1 transition-colors"
                   style={{ color: S.muted }}
                 >
@@ -172,6 +174,37 @@ export default function JournalPage() {
             </div>
           )
         })
+      )}
+
+      {/* 删除日志确认 */}
+      {deleteJournalId && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(74,64,53,0.4)' }} onClick={() => setDeleteJournalId(null)}>
+          <div className="card w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <h3 className="font-semibold mb-2" style={{ color: S.primary }}>删除日志</h3>
+            <p className="text-sm mb-3" style={{ color: '#D4766A' }}>此操作不可恢复！</p>
+            <p className="text-xs mb-3" style={{ color: S.secondary }}>输入以下文字确认删除：</p>
+            <p className="text-xs mb-3 font-bold select-all" style={{ color: S.primary, background: '#F5F0E6', padding: '8px 10px', borderRadius: 8 }}>
+              对不起，我是笨蛋，我申请删除日志
+            </p>
+            <input
+              className="form-input mb-3"
+              placeholder="输入上面的文字"
+              value={deleteJournalInput}
+              onChange={e => setDeleteJournalInput(e.target.value)}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setDeleteJournalId(null)} className="btn btn-ghost flex-1">取消</button>
+              <button
+                onClick={() => { if (deleteJournalInput === '对不起，我是笨蛋，我申请删除日志') { handleDelete(deleteJournalId); setDeleteJournalId(null) } }}
+                className="btn btn-danger flex-1"
+                style={{ opacity: deleteJournalInput === '对不起，我是笨蛋，我申请删除日志' ? 1 : 0.4 }}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
