@@ -27,11 +27,11 @@ export default function Home() {
           <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>AI选词</span>
         </Link>
 
-        <div className="card flex flex-col items-center py-7 opacity-40">
-          <span className="text-3xl mb-2.5">🚧</span>
-          <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>更多</span>
-          <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>待开发</span>
-        </div>
+        <Link href="/cheese" className="card flex flex-col items-center py-7 active:scale-95 transition-transform">
+          <span className="text-3xl mb-2.5" style={{ filter: 'saturate(0.8)' }}> </span>
+          <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>偷奶酪</span>
+          <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>音频播放</span>
+        </Link>
       </div>
 
       {/* 相框 */}
