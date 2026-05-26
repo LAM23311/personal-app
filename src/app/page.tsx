@@ -28,7 +28,7 @@ export default function Home() {
         </Link>
 
         <Link href="/cheese" className="card flex flex-col items-center py-7 active:scale-95 transition-transform">
-          <span className="text-3xl mb-2.5" style={{ filter: 'saturate(0.8)' }}> </span>
+          <span className="text-3xl mb-2.5" style={{ filter: "saturate(0.8)" }}>🐹</span>
           <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>偷奶酪</span>
           <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>音频播放</span>
         </Link>
