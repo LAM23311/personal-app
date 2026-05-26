@@ -17,20 +17,16 @@ function fmt(n: number) { return Math.round(n * 100) / 100 }
 // ===== 最优结算方案 =====
 function calcSettlement(project: Project) {
   const { members, expenses } = project
-  // 每人的应承担费用 & 实际垫付
   const map: Record<string, { shouldPay: number; paid: number }> = {}
   members.forEach(m => { map[m.id] = { shouldPay: 0, paid: 0 } })
 
   expenses.forEach(e => {
-    // 付款人垫付
     if (map[e.payerId]) map[e.payerId].paid += e.amount
-    // 分摊人承担
     e.splitMemberIds.forEach(id => {
       if (map[id]) map[id].shouldPay += e.perPersonAmount
     })
   })
 
-  // 结算金额 = 垫付 - 应付
   const balances = members.map(m => ({
     member: m,
     balance: fmt((map[m.id]?.paid || 0) - (map[m.id]?.shouldPay || 0)),
@@ -38,7 +34,6 @@ function calcSettlement(project: Project) {
     paid: fmt(map[m.id]?.paid || 0),
   }))
 
-  // 最优转账路径（贪心匹配）
   const debtors = balances.filter(b => b.balance < -0.01).map(b => ({ ...b, remain: Math.abs(b.balance) }))
   const creditors = balances.filter(b => b.balance > 0.01).map(b => ({ ...b, remain: b.balance }))
   debtors.sort((a, b) => b.remain - a.remain)
@@ -111,6 +106,7 @@ function exportTXT(project: Project) {
 export default function ExpensePage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [view, setView] = useState<'list' | 'detail'>('list')
   const [loading, setLoading] = useState(true)
 
   // 弹窗状态
@@ -145,7 +141,6 @@ export default function ExpensePage() {
     setLoading(true)
     const data = await getProjects()
     setProjects(data)
-    if (!activeId && data.length > 0) setActiveId(data[0].id)
     setLoading(false)
   }
 
@@ -160,6 +155,16 @@ export default function ExpensePage() {
     })
   }
 
+  function openProject(id: string) {
+    setActiveId(id)
+    setView('detail')
+  }
+
+  function backToList() {
+    setView('list')
+    setActiveId(null)
+  }
+
   // ===== 项目操作 =====
   function createProject() {
     if (!newProjectName.trim()) return
@@ -171,6 +176,7 @@ export default function ExpensePage() {
     }
     persist(p)
     setActiveId(p.id)
+    setView('detail')
     setNewProjectName('')
     setShowNewProject(false)
   }
@@ -184,7 +190,7 @@ export default function ExpensePage() {
   async function removeProject(id: string) {
     await deleteProject(id)
     setProjects(prev => prev.filter(p => p.id !== id))
-    if (activeId === id) setActiveId(projects.length > 1 ? projects.find(p => p.id !== id)?.id || null : null)
+    if (activeId === id) backToList()
   }
 
   // ===== 人员操作 =====
@@ -208,7 +214,6 @@ export default function ExpensePage() {
   }
 
   function confirmDeleteMember(id: string) {
-    // 检查是否有消费关联
     const used = activeProject?.expenses.some(e => e.payerId === id || e.splitMemberIds.includes(id))
     if (used) { setDeleteConfirm(id) }
     else doDeleteMember(id)
@@ -217,7 +222,6 @@ export default function ExpensePage() {
   function doDeleteMember(id: string) {
     if (!activeProject) return
     const members = activeProject.members.filter(m => m.id !== id)
-    // 从所有消费中移除该人员并重算
     const expenses = activeProject.expenses
       .map(e => {
         const split = e.splitMemberIds.filter(sid => sid !== id)
@@ -287,48 +291,65 @@ export default function ExpensePage() {
   // ===== 渲染 =====
   if (loading) return <div className="p-5 text-center" style={{ color: '#B0A899' }}>加载中...</div>
 
-  if (!activeProject) return (
-    <div className="max-w-3xl mx-auto p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <h1 className="text-xl font-bold mr-auto" style={{ color: '#4A4035' }}>记账</h1>
-        <button onClick={() => setShowNewProject(true)} className="btn btn-primary text-sm px-3 py-1.5">+ 新建</button>
-      </div>
-      <div className="card text-center py-12">
-        <p style={{ color: '#8A7F73' }}>还没有项目，点击「新建」创建一个分账项目</p>
-      </div>
-      {showNewProject && (
-        <Modal onClose={() => setShowNewProject(false)}>
-          <h3 className="font-semibold mb-3" style={{ color: '#4A4035' }}>新建项目</h3>
-          <input className="form-input mb-3" placeholder="项目名称，如珠海之旅" value={newProjectName}
-            onChange={e => setNewProjectName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createProject()} autoFocus />
-          <button onClick={createProject} className="btn btn-primary w-full">创建</button>
-        </Modal>
-      )}
-    </div>
-  )
+  // ===== 项目列表页 =====
+  if (view === 'list') {
+    return (
+      <div className="max-w-3xl mx-auto p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <h1 className="text-xl font-bold mr-auto" style={{ color: '#4A4035' }}>记账</h1>
+          <button onClick={() => setShowNewProject(true)} className="btn btn-primary text-sm px-3 py-1.5">+ 新建</button>
+        </div>
 
+        {projects.length === 0 ? (
+          <div className="card text-center py-12">
+            <p style={{ color: '#8A7F73' }}>还没有项目，点击「新建」创建一个分账项目</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {projects.map(p => {
+              const total = fmt(p.expenses.reduce((s, e) => s + e.amount, 0))
+              return (
+                <div key={p.id} className="card active:scale-[0.98] transition-transform cursor-pointer" onClick={() => openProject(p.id)}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-base" style={{ color: '#4A4035' }}>{p.name}</h3>
+                      <div className="text-xs mt-1" style={{ color: '#8A7F73' }}>
+                        {p.members.length}人 · {p.expenses.length}笔 · ¥{total}
+                      </div>
+                    </div>
+                    <svg className="w-5 h-5" style={{ color: '#B0A899' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {showNewProject && (
+          <Modal onClose={() => setShowNewProject(false)}>
+            <h3 className="font-semibold mb-3" style={{ color: '#4A4035' }}>新建项目</h3>
+            <input className="form-input mb-3" placeholder="项目名称，如珠海之旅" value={newProjectName}
+              onChange={e => setNewProjectName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createProject()} autoFocus />
+            <button onClick={createProject} className="btn btn-primary w-full">创建</button>
+          </Modal>
+        )}
+      </div>
+    )
+  }
+
+  // ===== 项目详情页 =====
   return (
     <div className="max-w-3xl mx-auto p-4">
-      {/* ===== 顶部：项目切换栏 ===== */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <h1 className="text-xl font-bold mr-auto" style={{ color: '#4A4035' }}>记账</h1>
-        {projects.map(p => (
-          <button key={p.id} onClick={() => setActiveId(p.id)}
-            className="text-sm px-3 py-1.5 rounded-full font-medium transition-all"
-            style={{
-              background: p.id === activeId ? 'rgba(143,191,143,0.15)' : '#EDE7DB',
-              color: p.id === activeId ? '#5A9A5A' : '#8A7F73',
-              border: `1px solid ${p.id === activeId ? 'rgba(143,191,143,0.4)' : 'transparent'}`,
-            }}>
-            {p.name}
-          </button>
-        ))}
-        <button onClick={() => setShowNewProject(true)} className="btn btn-primary text-sm px-3 py-1.5">+ 新建</button>
-      </div>
-
-      {/* ===== 项目操作按钮 ===== */}
+      {/* ===== 顶部：返回 + 项目名 ===== */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="font-bold text-lg" style={{ color: '#4A4035' }}>{activeProject!.name}</span>
+        <button onClick={backToList} className="p-1.5 -ml-1.5 rounded-lg transition-colors active:scale-90" style={{ color: '#8A7F73' }}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span className="font-bold text-lg" style={{ color: '#4A4035' }}>{activeProject?.name}</span>
         <button onClick={() => { setEditProjectName(activeProject!.name); setShowRenameProject(true) }}
           className="text-xs px-2 py-0.5 rounded" style={{ background: '#EDE7DB', color: '#8A7F73' }}>重命名</button>
         <button onClick={() => { if (confirm('确定删除此项目？')) removeProject(activeProject!.id) }}
@@ -440,7 +461,6 @@ export default function ExpensePage() {
           {/* ===== 分账结果 Tab ===== */}
           {tab === 'settlement' && settlement && (
             <div>
-              {/* 明细表 */}
               <div className="card mb-3 overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -468,7 +488,6 @@ export default function ExpensePage() {
                 </table>
               </div>
 
-              {/* 结算方案 */}
               <div className="card">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold" style={{ color: '#4A4035' }}>结算方案</span>
@@ -500,16 +519,6 @@ export default function ExpensePage() {
       </div>
 
       {/* ===== 弹窗们 ===== */}
-
-      {/* 新建项目 */}
-      {showNewProject && (
-        <Modal onClose={() => setShowNewProject(false)}>
-          <h3 className="font-semibold mb-3" style={{ color: '#4A4035' }}>新建项目</h3>
-          <input className="form-input mb-3" placeholder="项目名称，如珠海之旅" value={newProjectName}
-            onChange={e => setNewProjectName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createProject()} autoFocus />
-          <button onClick={createProject} className="btn btn-primary w-full">创建</button>
-        </Modal>
-      )}
 
       {/* 重命名项目 */}
       {showRenameProject && (
