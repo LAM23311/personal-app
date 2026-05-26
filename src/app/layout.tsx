@@ -52,6 +52,10 @@ export default function RootLayout({
             <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <span className="text-[11px] mt-0.5 font-medium">卧底</span>
           </Link>
+          <Link href="/cheese" className="flex flex-col items-center justify-center flex-1 h-full transition-colors active:scale-90" style={{ color: '#8A7F73' }}>
+            <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+            <span className="text-[11px] mt-0.5 font-medium">奶酪</span>
+          </Link>
         </nav>
       </body>
     </html>
