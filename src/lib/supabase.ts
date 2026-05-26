@@ -1,7 +1,22 @@
-// API 地址
-const API_BASE = 'https://long-d0g1dx0nl38c1394f.api.tcloudbasegateway.com/v1/functions/scfhelloworld'
+// GitHub 仓库存储
+// Token 从 URL hash 读取，格式: #token=ghp_xxxx
+const GH_OWNER = 'LAM23311'
+const GH_REPO = 'personal-app'
+const GH_BRANCH = 'master'
+const GH_FILE = 'data.json'
 
-// ===== 本地存储 =====
+function getGhToken(): string {
+  if (typeof window === 'undefined') return ''
+  const hash = window.location.hash || ''
+  const match = hash.match(/token=([^&]+)/)
+  if (match) {
+    localStorage.setItem('gh_token', match[1])
+    return match[1]
+  }
+  return localStorage.getItem('gh_token') || ''
+}
+
+// ===== 本地存储降级 =====
 const LOCAL_KEY = 'personal_app_data'
 
 function getLocalData() {
@@ -17,6 +32,58 @@ function getLocalData() {
 function saveLocalData(data: any) {
   if (typeof window === 'undefined') return
   localStorage.setItem(LOCAL_KEY, JSON.stringify(data))
+}
+
+// ===== GitHub API =====
+let fileSha: string | null = null
+
+async function ghFetch(path: string, options: RequestInit = {}) {
+  const token = getGhToken()
+  if (!token) throw new Error('no token')
+  const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+  return res
+}
+
+async function loadData(): Promise<any> {
+  try {
+    const res = await ghFetch(`/contents/${GH_FILE}`)
+    if (res.ok) {
+      const file = await res.json()
+      fileSha = file.sha
+      const content = atob(file.content.replace(/\n/g, ''))
+      return JSON.parse(content)
+    }
+  } catch {}
+  return getLocalData()
+}
+
+async function saveData(data: any): Promise<boolean> {
+  try {
+    const body: any = {
+      message: 'update data',
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
+      branch: GH_BRANCH,
+    }
+    if (fileSha) body.sha = fileSha
+    const res = await ghFetch(`/contents/${GH_FILE}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      const result = await res.json()
+      fileSha = result.content.sha
+      return true
+    }
+  } catch {}
+  return false
 }
 
 // ===== 类型定义 =====
@@ -49,44 +116,39 @@ export type Project = {
 
 // ===== 项目 CRUD =====
 export async function getProjects(): Promise<Project[]> {
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/projects`)
-      if (res.ok) return await res.json()
-    } catch {}
+  try {
+    const data = await loadData()
+    return data.projects || []
+  } catch {
+    return getLocalData().projects
   }
-  return getLocalData().projects
 }
 
 export async function saveProject(project: Project): Promise<void> {
   project.updatedAt = new Date().toISOString()
-  if (API_BASE) {
-    try {
-      await fetch(`${API_BASE}/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(project),
-      })
-      return
-    } catch {}
+  let data: any
+  try {
+    data = await loadData()
+  } catch {
+    data = getLocalData()
   }
-  const data = getLocalData()
   const idx = data.projects.findIndex((p: Project) => p.id === project.id)
   if (idx >= 0) data.projects[idx] = project
   else data.projects.unshift(project)
-  saveLocalData(data)
+  const ok = await saveData(data)
+  if (!ok) saveLocalData(data)
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  if (API_BASE) {
-    try {
-      await fetch(`${API_BASE}/projects/${id}`, { method: 'DELETE' })
-      return
-    } catch {}
+  let data: any
+  try {
+    data = await loadData()
+  } catch {
+    data = getLocalData()
   }
-  const data = getLocalData()
   data.projects = data.projects.filter((p: Project) => p.id !== id)
-  saveLocalData(data)
+  const ok = await saveData(data)
+  if (!ok) saveLocalData(data)
 }
 
 // ===== 日志 CRUD =====
@@ -100,13 +162,12 @@ export type Journal = {
 }
 
 export async function getJournals(): Promise<Journal[]> {
-  if (API_BASE) {
-    try {
-      const res = await fetch(`${API_BASE}/journals`)
-      if (res.ok) return await res.json()
-    } catch {}
+  try {
+    const data = await loadData()
+    return data.journals || []
+  } catch {
+    return getLocalData().journals
   }
-  return getLocalData().journals
 }
 
 export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): Promise<Journal> {
@@ -115,30 +176,26 @@ export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): P
     id: crypto.randomUUID(),
     created_at: new Date().toISOString(),
   }
-  if (API_BASE) {
-    try {
-      await fetch(`${API_BASE}/journals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newJournal),
-      })
-      return newJournal
-    } catch {}
+  let data: any
+  try {
+    data = await loadData()
+  } catch {
+    data = getLocalData()
   }
-  const data = getLocalData()
   data.journals.unshift(newJournal)
-  saveLocalData(data)
+  const ok = await saveData(data)
+  if (!ok) saveLocalData(data)
   return newJournal
 }
 
 export async function deleteJournal(id: string) {
-  if (API_BASE) {
-    try {
-      await fetch(`${API_BASE}/journals/${id}`, { method: 'DELETE' })
-      return
-    } catch {}
+  let data: any
+  try {
+    data = await loadData()
+  } catch {
+    data = getLocalData()
   }
-  const data = getLocalData()
   data.journals = data.journals.filter((j: Journal) => j.id !== id)
-  saveLocalData(data)
+  const ok = await saveData(data)
+  if (!ok) saveLocalData(data)
 }
