@@ -81,6 +81,24 @@ async function saveData(data: any): Promise<boolean> {
   return false
 }
 
+// ===== 远程更新检测 =====
+export async function checkRemoteUpdate(): Promise<boolean> {
+  const token = getGhToken()
+  if (!token) return false
+  try {
+    const res = await ghFetch(`/contents/${GH_FILE}`)
+    if (res.ok) {
+      const file = await res.json()
+      return fileSha !== null && file.sha !== fileSha
+    }
+  } catch {}
+  return false
+}
+
+export function clearCache() {
+  fileSha = null
+}
+
 // 提示输入 token
 export function needToken(): boolean {
   if (typeof window === 'undefined') return false
