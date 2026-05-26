@@ -163,9 +163,11 @@ export default function ExpensePage() {
   // ===== 项目操作 =====
   function createProject() {
     if (!newProjectName.trim()) return
+    const defaultMembers = ['皮皮', '小龙', '果果', '大伟']
     const p: Project = {
       id: uid(), name: newProjectName.trim(),
-      members: [], expenses: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      members: defaultMembers.map(n => ({ id: uid(), name: n, notes: '' })),
+      expenses: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     }
     persist(p)
     setActiveId(p.id)
@@ -350,13 +352,16 @@ export default function ExpensePage() {
             {activeProject!.members.length === 0 ? (
               <p className="text-xs" style={{ color: '#B0A899' }}>添加参与人员</p>
             ) : (
-              <div className="space-y-1">
+              <div className="flex flex-wrap gap-1.5">
                 {activeProject!.members.map(m => (
-                  <div key={m.id} className="flex items-center gap-1 group">
-                    <span className="text-sm font-medium flex-1" style={{ color: '#4A4035' }}>{m.name}</span>
-                    {m.notes && <span className="text-xs" style={{ color: '#B0A899' }}>{m.notes}</span>}
-                    <button onClick={() => openEditMember(m)} className="text-xs opacity-0 group-hover:opacity-100" style={{ color: '#8A7F73' }}>改</button>
-                    <button onClick={() => confirmDeleteMember(m.id)} className="text-xs opacity-0 group-hover:opacity-100" style={{ color: '#D4766A' }}>删</button>
+                  <div key={m.id} className="group flex items-center gap-0.5 text-sm font-medium rounded-full px-2.5 py-0.5" style={{ background: '#EDE7DB', color: '#4A4035' }}>
+                    <span>{m.name}</span>
+                    <button onClick={() => openEditMember(m)} className="hidden group-hover:inline text-xs" style={{ color: '#8A7F73' }}>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>
+                    <button onClick={() => confirmDeleteMember(m.id)} className="hidden group-hover:inline text-xs" style={{ color: '#D4766A' }}>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                   </div>
                 ))}
               </div>
