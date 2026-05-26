@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "css": "tailwindcss -i src/app/globals.src.css -o src/app/globals.css",
-    "css:watch": "tailwindcss -i src/app/globals.src.css -o src/app/globals.css --watch",
+    "css": "npx tailwindcss -i src/app/globals.src.css -o src/app/globals.css",
     "prebuild": "npm run css",
     "dev": "next dev",
     "build": "next build",
