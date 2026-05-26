@@ -27,15 +27,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Debug
-        run: |
-          ls node_modules/.bin/tailwindcss* 2>/dev/null || echo "no tailwindcss binary"
-          ls node_modules/@tailwindcss/cli/ 2>/dev/null || echo "no cli package"
-          node -e "try{require('@tailwindcss/cli')}catch(e){console.log('cli require failed:',e.message)}"
       - name: Build CSS
-        run: npx tailwindcss -i src/app/globals.src.css -o src/app/globals.css 2>&1 || cat src/app/globals.css 2>/dev/null
+        run: npx tailwindcss -i src/app/globals.src.css -o src/app/globals.css
+      - name: Verify CSS
+        run: wc -l src/app/globals.css && head -3 src/app/globals.css
       - name: Build Next.js
-        run: npx next build
+        run: npx next build 2>&1 | tee build.log
+      - name: Show build log on failure
+        if: failure()
+        run: tail -60 build.log
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
