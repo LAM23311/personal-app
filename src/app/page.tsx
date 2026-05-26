@@ -28,7 +28,7 @@ export default function Home() {
         </Link>
 
         <Link href="/cheese" className="card flex flex-col items-center py-7 active:scale-95 transition-transform">
-          <span className="text-3xl mb-2.5" style={{ filter: 'saturate(0.8)' }}> </span>
+          <svg className="w-8 h-8 mb-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#8A7F73' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3c-1.5 0-3 .5-4 1.5S6 7 6 8.5V14a6 6 0 0012 0V8.5C18 7 17 5.5 16 4.5S13.5 3 12 3zM9 11a1 1 0 100-2 1 1 0 000 2zM15 11a1 1 0 100-2 1 1 0 000 2zM8 5.5C7.5 4 6 3 6 3M16 5.5c.5-1.5 2-2.5 2-2.5" /></svg>
           <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>偷奶酪</span>
           <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>音频播放</span>
         </Link>
