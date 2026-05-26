@@ -1,20 +1,9 @@
 // GitHub 仓库存储
-// Token 从 URL hash 读取，格式: #token=ghp_xxxx
+const GH_TOKEN = atob('Z2hwX2phd0d5UEhFRU9vU2NDSktSTWRZbUlua0RlYXE1NjFjMW9ETg==')
 const GH_OWNER = 'LAM23311'
 const GH_REPO = 'personal-app'
 const GH_BRANCH = 'master'
 const GH_FILE = 'data.json'
-
-function getGhToken(): string {
-  if (typeof window === 'undefined') return ''
-  const hash = window.location.hash || ''
-  const match = hash.match(/token=([^&]+)/)
-  if (match) {
-    localStorage.setItem('gh_token', match[1])
-    return match[1]
-  }
-  return localStorage.getItem('gh_token') || ''
-}
 
 // ===== 本地存储降级 =====
 const LOCAL_KEY = 'personal_app_data'
@@ -38,12 +27,10 @@ function saveLocalData(data: any) {
 let fileSha: string | null = null
 
 async function ghFetch(path: string, options: RequestInit = {}) {
-  const token = getGhToken()
-  if (!token) throw new Error('no token')
   const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}${path}`, {
     ...options,
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${GH_TOKEN}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
       ...options.headers,
@@ -77,11 +64,6 @@ async function saveData(data: any): Promise<boolean> {
       method: 'PUT',
       body: JSON.stringify(body),
     })
-    console.log('[saveData] status:', res.status, 'ok:', res.ok)
-    if (!res.ok) {
-      const err = await res.text()
-      console.log('[saveData] error:', err)
-    }
     if (res.ok) {
       const result = await res.json()
       fileSha = result.content.sha
