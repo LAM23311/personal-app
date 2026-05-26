@@ -5,9 +5,6 @@ on:
     branches: [master]
   workflow_dispatch:
 
-env:
-  NODE_ENV: production
-
 permissions:
   contents: read
   pages: write
@@ -30,15 +27,7 @@ jobs:
       - name: Build CSS
         run: npx tailwindcss -i src/app/globals.src.css -o src/app/globals.css
       - name: Build Next.js
-        run: npx next build 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
-      - name: Show error
-        if: failure()
-        run: |
-          echo "## Build Error" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -80 build.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -80 build.log
+        run: npx next build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
