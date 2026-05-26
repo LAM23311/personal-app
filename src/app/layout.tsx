@@ -5,7 +5,7 @@ import TokenPrompt from "./TokenPrompt";
 import DataSync from "./DataSync";
 
 export const metadata: Metadata = {
-  title: "个人工具箱",
+  title: "腾哥和铁锤的百宝箱",
   description: "记账、日志、小游戏",
 };
 

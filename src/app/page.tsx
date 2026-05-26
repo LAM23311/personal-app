@@ -6,7 +6,7 @@ import Image from 'next/image'
 export default function Home() {
   return (
     <div className="p-5 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6 mt-2" style={{ color: '#4A4035' }}>个人工具箱</h1>
+      <h1 className="text-2xl font-bold mb-6 mt-2" style={{ color: '#4A4035' }}>腾哥和铁锤的百宝箱</h1>
 
       <div className="grid grid-cols-2 gap-4">
         <Link href="/expense" className="card flex flex-col items-center py-7 active:scale-95 transition-transform">
