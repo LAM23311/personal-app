@@ -62,6 +62,17 @@ export default function CheesePage() {
             0.9x
           </button>
           <button
+            onClick={() => changeSpeed(1.0)}
+            className="text-sm px-4 py-2 rounded-full font-medium transition-all"
+            style={{
+              background: speed === 1.0 ? 'rgba(143,191,143,0.15)' : '#EDE7DB',
+              color: speed === 1.0 ? '#5A9A5A' : '#8A7F73',
+              border: `1px solid ${speed === 1.0 ? 'rgba(143,191,143,0.4)' : 'transparent'}`,
+            }}
+          >
+            1.0x
+          </button>
+          <button
             onClick={() => changeSpeed(1.1)}
             className="text-sm px-4 py-2 rounded-full font-medium transition-all"
             style={{
