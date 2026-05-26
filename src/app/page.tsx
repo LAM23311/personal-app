@@ -55,7 +55,7 @@ export default function Home() {
             }}
           >
             <Image
-              src="/personal-app/tengge.png"
+              src="/personal-app/tgntc.png"
               alt="照片"
               width={600}
               height={400}
