@@ -77,6 +77,11 @@ async function saveData(data: any): Promise<boolean> {
       method: 'PUT',
       body: JSON.stringify(body),
     })
+    console.log('[saveData] status:', res.status, 'ok:', res.ok)
+    if (!res.ok) {
+      const err = await res.text()
+      console.log('[saveData] error:', err)
+    }
     if (res.ok) {
       const result = await res.json()
       fileSha = result.content.sha
