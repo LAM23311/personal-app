@@ -53,7 +53,7 @@ async function loadData(): Promise<any> {
     if (res.ok) {
       const file = await res.json()
       fileSha = file.sha
-      const content = atob(file.content.replace(/\n/g, ''))
+      const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))))
       return JSON.parse(content)
     }
   } catch {}
