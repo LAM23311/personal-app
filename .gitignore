@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated CSS
+src/app/globals.css
+
 # production
 /build
 
