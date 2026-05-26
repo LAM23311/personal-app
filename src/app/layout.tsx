@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import Script from "next/script";
 import "./globals.css";
+import TokenPrompt from "./TokenPrompt";
 
 export const metadata: Metadata = {
   title: "个人工具箱",
@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="min-h-screen pb-16">
-        <Script src="/personal-app/config.js" strategy="beforeInteractive" />
+        <TokenPrompt />
         {children}
         <nav
           className="fixed bottom-0 left-0 right-0 flex justify-around items-center h-14 z-50 safe-area-bottom"

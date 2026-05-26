@@ -1,19 +1,13 @@
 // GitHub 仓库存储
-// Token 从 public/config.js 读取（window.__APP_CONFIG__）
-let GH_TOKEN = ''
-let GH_OWNER = 'LAM23311'
-let GH_REPO = 'personal-app'
+// Token 从 localStorage 读取，首次使用弹窗输入
+const GH_OWNER = 'LAM23311'
+const GH_REPO = 'personal-app'
 const GH_BRANCH = 'master'
 const GH_FILE = 'data.json'
 
-function initConfig() {
-  if (typeof window === 'undefined') return
-  const w = window as any
-  if (w.__APP_CONFIG__ && !GH_TOKEN) {
-    GH_TOKEN = w.__APP_CONFIG__.token || ''
-    GH_OWNER = w.__APP_CONFIG__.owner || GH_OWNER
-    GH_REPO = w.__APP_CONFIG__.repo || GH_REPO
-  }
+function getGhToken(): string {
+  if (typeof window === 'undefined') return ''
+  return localStorage.getItem('gh_token') || ''
 }
 
 // ===== 本地存储降级 =====
@@ -38,11 +32,11 @@ function saveLocalData(data: any) {
 let fileSha: string | null = null
 
 async function ghFetch(path: string, options: RequestInit = {}) {
-  initConfig()
+  const token = getGhToken()
   const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}${path}`, {
     ...options,
     headers: {
-      'Authorization': `Bearer ${GH_TOKEN}`,
+      'Authorization': `Bearer ${token}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
       ...options.headers,
@@ -53,8 +47,8 @@ async function ghFetch(path: string, options: RequestInit = {}) {
 
 async function loadData(): Promise<any> {
   try {
-    initConfig()
-    if (!GH_TOKEN) throw new Error('no token')
+    const token = getGhToken()
+    if (!token) throw new Error('no token')
     const res = await ghFetch(`/contents/${GH_FILE}`)
     if (res.ok) {
       const file = await res.json()
@@ -85,6 +79,24 @@ async function saveData(data: any): Promise<boolean> {
     }
   } catch {}
   return false
+}
+
+// 提示输入 token
+export function needToken(): boolean {
+  if (typeof window === 'undefined') return false
+  return !getGhToken() && !localStorage.getItem('gh_token_skipped')
+}
+
+export function skipToken() {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('gh_token_skipped', '1')
+  }
+}
+
+export function setToken(token: string) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('gh_token', token)
+  }
 }
 
 // ===== 类型定义 =====
