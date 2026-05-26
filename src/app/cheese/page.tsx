@@ -43,11 +43,11 @@ export default function CheesePage() {
       <h1 className="text-2xl font-bold mb-6 mt-2" style={{ color: '#4A4035' }}>偷奶酪</h1>
 
       <div className="flex flex-col items-center gap-3">
-        <button onClick={play} className="btn btn-primary w-48 py-3 text-base">
-          {playing ? '▶ 播放中...' : '▶ 开始'}
+        <button onClick={play} className="card w-48 py-3 text-base font-medium text-center active:scale-95 transition-transform" style={{ color: playing ? '#5A9A5A' : '#4A4035', border: `1px solid ${playing ? 'rgba(143,191,143,0.4)' : '#EDE7DB'}`, background: playing ? 'rgba(143,191,143,0.12)' : undefined }}>
+          {playing ? '播放中' : '开始'}
         </button>
-        <button onClick={pause} className="btn btn-ghost w-48 py-3 text-base">⏸ 暂停</button>
-        <button onClick={replay} className="btn btn-ghost w-48 py-3 text-base">↻ 重播</button>
+        <button onClick={pause} className="card w-48 py-3 text-base font-medium text-center active:scale-95 transition-transform" style={{ color: '#4A4035', border: '1px solid #EDE7DB' }}>暂停</button>
+        <button onClick={replay} className="card w-48 py-3 text-base font-medium text-center active:scale-95 transition-transform" style={{ color: '#4A4035', border: '1px solid #EDE7DB' }}>重播</button>
 
         <div className="flex gap-2 mt-3">
           <button
