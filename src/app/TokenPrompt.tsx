@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { needToken, setToken, skipToken } from '@/lib/supabase'
+import { needToken, setToken, skipToken, clearCache } from '@/lib/supabase'
 
 export default function TokenPrompt() {
   const [show, setShow] = useState(false)
@@ -39,6 +39,19 @@ export default function TokenPrompt() {
         />
         <button onClick={handleSave} className="btn btn-primary w-full mb-2">开启同步</button>
         <button onClick={() => { skipToken(); setShow(false) }} className="btn btn-ghost w-full text-xs">跳过，仅本地使用</button>
+        <button
+          onClick={() => {
+            if (confirm('清空本地数据？此操作不可恢复。')) {
+              localStorage.clear()
+              clearCache()
+              window.location.reload()
+            }
+          }}
+          className="text-xs mt-2 w-full text-center"
+          style={{ color: '#B0A899' }}
+        >
+          清空本地数据
+        </button>
       </div>
     </div>
   )
