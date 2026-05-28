@@ -10,6 +10,7 @@ type Player = { id: number; word: string; isUndercover: boolean; eliminated: boo
 
 const POOL_MAX = 10
 const POOL_LOW = 5
+const USED_KEY = 'undercover_used_local'
 
 const S = {
   primary: '#4A4035',
@@ -24,15 +25,36 @@ const S = {
   blueBg: 'rgba(123,167,201,0.1)',
 }
 
-// 从内置词库随机取 count 组
+function getUsedIndices(): Set<number> {
+  try { return new Set(JSON.parse(localStorage.getItem(USED_KEY) || '[]')) } catch { return new Set() }
+}
+function saveUsedIndices(s: Set<number>) { localStorage.setItem(USED_KEY, JSON.stringify([...s])) }
+
+// 标记本地词对为已使用，全部用完则自动重置
+function markUsed(pair: WordPair) {
+  if (pair.category !== '本地词库') return
+  const idx = CIHUI.findIndex(([a, b]) => a === pair.wordA && b === pair.wordB)
+  if (idx < 0) return
+  const used = getUsedIndices()
+  used.add(idx)
+  if (used.size >= CIHUI.length) used.clear()
+  saveUsedIndices(used)
+}
+
+function getLocalStats() { return { used: getUsedIndices().size, total: CIHUI.length } }
+
+// 从内置词库随机取 count 组（排除已使用）
 function pickLocal(count: number): WordPair[] {
-  const shuffled = [...CIHUI].sort(() => Math.random() - 0.5)
+  const used = getUsedIndices()
+  const available = CIHUI.filter((_, i) => !used.has(i))
+  const shuffled = [...available].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, count).map(([wordA, wordB]) => ({ wordA, wordB, category: '本地词库' }))
 }
 
 export default function UndercoverPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [phase, setPhase] = useState<Phase>('setup')
+  const [localStats, setLocalStats] = useState(getLocalStats)
   const [playerCount, setPlayerCount] = useState(4)
   const [undercoverCount, setUndercoverCount] = useState(1)
   const [poolSize, setPoolSize] = useState(0)
@@ -46,6 +68,7 @@ export default function UndercoverPage() {
   const aiRef = useRef(false)
 
   const syncPool = () => setPoolSize(poolRef.current.length)
+  const syncLocalStats = () => setLocalStats(getLocalStats())
 
   // AI 补充词池
   const checkAndRefill = useCallback(() => {
@@ -70,6 +93,7 @@ export default function UndercoverPage() {
     if (poolRef.current.length > 0) {
       const pair = poolRef.current.shift()!
       syncPool()
+      markUsed(pair); syncLocalStats()
       return pair
     }
     const local = pickLocal(2)
@@ -77,6 +101,7 @@ export default function UndercoverPage() {
     poolRef.current.push(...local)
     const pair = poolRef.current.shift()!
     syncPool()
+    markUsed(pair); syncLocalStats()
     return pair
   }
 
@@ -99,6 +124,7 @@ export default function UndercoverPage() {
     const pair = poolRef.current.shift()
     if (!pair) return
     syncPool()
+    markUsed(pair); syncLocalStats()
     setCurrentPair(pair)
     assignWords(pair)
     if (poolRef.current.length < POOL_LOW) checkAndRefill()
@@ -127,12 +153,18 @@ export default function UndercoverPage() {
     if (alive.filter(p => p.isUndercover).length === 0 || alive.length <= 2) setPhase('result')
   }
 
+  function resetUsedLocal() {
+    saveUsedIndices(new Set())
+    syncLocalStats()
+  }
+
   function reset() {
     setPhase('setup')
     setPlayers([])
     setCurrentReveal(0)
     setRevealed(false)
     setError('')
+    syncLocalStats()
   }
 
   const alivePlayers = players.filter(p => !p.eliminated)
@@ -168,9 +200,13 @@ export default function UndercoverPage() {
             </div>
           </div>
           <button onClick={handleStart} className="btn btn-primary w-full mt-2">开始游戏</button>
-          <div className="flex items-center justify-center gap-2 mt-2">
+          <div className="flex items-center justify-center gap-3 mt-2 flex-wrap">
             <span className="text-xs" style={{ color: S.muted }}>词池 {poolSize}/{POOL_MAX}</span>
+            <span className="text-xs" style={{ color: S.muted }}>本地剩余 {localStats.total - localStats.used}/{localStats.total}</span>
             {aiLoading && <span className="text-xs" style={{ color: S.accent }}>AI补充中...</span>}
+            {localStats.used > 0 && (
+              <button onClick={resetUsedLocal} className="text-xs underline" style={{ color: S.secondary }}>重置词库</button>
+            )}
           </div>
         </div>
       )}
