@@ -32,6 +32,12 @@ export default function Home() {
           <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>偷奶酪</span>
           <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>音频播放</span>
         </Link>
+
+        <a href="http://47.97.86.63:3456" target="_blank" rel="noopener noreferrer" className="card flex flex-col items-center py-7 active:scale-95 transition-transform">
+          <span className="text-3xl mb-2.5" style={{ filter: 'saturate(0.8)' }}>🎨</span>
+          <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>你画我猜</span>
+          <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>在线多人</span>
+        </a>
       </div>
 
       {/* 相框 */}
