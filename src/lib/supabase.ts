@@ -182,7 +182,18 @@ export async function deleteProject(id: string): Promise<void> {
   if (!ok) saveLocalData(data)
 }
 
-// ===== 日志 CRUD =====
+// ===== 日志 CRUD (ECS 服务器) =====
+const JOURNAL_API = 'http://47.97.86.63:3456/api/journals'
+const JOURNAL_LOCAL_KEY = 'personal_app_journals'
+
+function getLocalJournals(): Journal[] {
+  if (typeof window === 'undefined') return []
+  try { return JSON.parse(localStorage.getItem(JOURNAL_LOCAL_KEY) || '[]') } catch { return [] }
+}
+function saveLocalJournals(journals: Journal[]) {
+  if (typeof window !== 'undefined') localStorage.setItem(JOURNAL_LOCAL_KEY, JSON.stringify(journals))
+}
+
 export type Journal = {
   id: string
   title: string
@@ -194,39 +205,37 @@ export type Journal = {
 
 export async function getJournals(): Promise<Journal[]> {
   try {
-    const data = await loadData()
-    return data.journals || []
-  } catch {
-    return getLocalData().journals
-  }
+    const res = await fetch(JOURNAL_API)
+    if (res.ok) {
+      const journals = await res.json()
+      saveLocalJournals(journals)
+      return journals
+    }
+  } catch {}
+  return getLocalJournals()
 }
 
 export async function addJournal(journal: Omit<Journal, 'id' | 'created_at'>): Promise<Journal> {
-  const newJournal = {
-    ...journal,
-    id: crypto.randomUUID(),
-    created_at: new Date().toISOString(),
-  }
-  let data: any
   try {
-    data = await loadData()
-  } catch {
-    data = getLocalData()
-  }
-  data.journals.unshift(newJournal)
-  const ok = await saveData(data)
-  if (!ok) saveLocalData(data)
-  return newJournal
+    const res = await fetch(JOURNAL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(journal),
+    })
+    if (res.ok) return await res.json()
+  } catch {}
+  const fallback: Journal = { ...journal, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+  const local = getLocalJournals()
+  local.unshift(fallback)
+  saveLocalJournals(local)
+  return fallback
 }
 
 export async function deleteJournal(id: string) {
-  let data: any
   try {
-    data = await loadData()
-  } catch {
-    data = getLocalData()
-  }
-  data.journals = data.journals.filter((j: Journal) => j.id !== id)
-  const ok = await saveData(data)
-  if (!ok) saveLocalData(data)
+    const res = await fetch(`${JOURNAL_API}/${id}`, { method: 'DELETE' })
+    if (res.ok) return
+  } catch {}
+  const local = getLocalJournals().filter(j => j.id !== id)
+  saveLocalJournals(local)
 }
