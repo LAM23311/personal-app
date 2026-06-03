@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "腾哥和铁锤的百宝箱",
+  title: "百宝箱",
   description: "记账、日志、小游戏",
 };
 
