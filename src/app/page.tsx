@@ -38,6 +38,12 @@ export default function Home() {
           <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>你画我猜</span>
           <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>在线多人</span>
         </a>
+
+        <Link href="/bangbang" className="card flex flex-col items-center py-7 active:scale-95 transition-transform">
+          <span className="text-3xl mb-2.5" style={{ filter: 'saturate(0.8)' }}>🎯</span>
+          <span className="font-semibold text-[15px]" style={{ color: '#4A4035' }}>邦邦英语</span>
+          <span className="text-xs mt-1" style={{ color: '#8A7F73' }}>每日打卡</span>
+        </Link>
       </div>
 
       {/* 相框 */}
