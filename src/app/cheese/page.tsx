@@ -34,8 +34,9 @@ export default function CheesePage() {
   }
 
   function changeSpeed(s: number) {
-    setSpeed(s)
-    if (audioRef.current) audioRef.current.playbackRate = s
+    const v = Math.round(s * 10) / 10
+    setSpeed(v)
+    if (audioRef.current) audioRef.current.playbackRate = v
   }
 
   return (
@@ -49,40 +50,25 @@ export default function CheesePage() {
         <button onClick={pause} className="card w-48 py-3 text-base font-medium text-center active:scale-95 transition-transform" style={{ color: '#4A4035', border: '1px solid #EDE7DB' }}>暂停</button>
         <button onClick={replay} className="card w-48 py-3 text-base font-medium text-center active:scale-95 transition-transform" style={{ color: '#4A4035', border: '1px solid #EDE7DB' }}>重播</button>
 
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => changeSpeed(0.9)}
-            className="text-sm px-4 py-2 rounded-full font-medium transition-all"
-            style={{
-              background: speed === 0.9 ? 'rgba(143,191,143,0.15)' : '#EDE7DB',
-              color: speed === 0.9 ? '#5A9A5A' : '#8A7F73',
-              border: `1px solid ${speed === 0.9 ? 'rgba(143,191,143,0.4)' : 'transparent'}`,
-            }}
-          >
-            0.9x
-          </button>
-          <button
-            onClick={() => changeSpeed(1.0)}
-            className="text-sm px-4 py-2 rounded-full font-medium transition-all"
-            style={{
-              background: speed === 1.0 ? 'rgba(143,191,143,0.15)' : '#EDE7DB',
-              color: speed === 1.0 ? '#5A9A5A' : '#8A7F73',
-              border: `1px solid ${speed === 1.0 ? 'rgba(143,191,143,0.4)' : 'transparent'}`,
-            }}
-          >
-            1.0x
-          </button>
-          <button
-            onClick={() => changeSpeed(1.1)}
-            className="text-sm px-4 py-2 rounded-full font-medium transition-all"
-            style={{
-              background: speed === 1.1 ? 'rgba(143,191,143,0.15)' : '#EDE7DB',
-              color: speed === 1.1 ? '#5A9A5A' : '#8A7F73',
-              border: `1px solid ${speed === 1.1 ? 'rgba(143,191,143,0.4)' : 'transparent'}`,
-            }}
-          >
-            1.1x
-          </button>
+        <div className="w-64 mt-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs" style={{ color: '#8A7F73' }}>倍速</span>
+            <span className="text-sm font-semibold" style={{ color: '#5A9A5A' }}>{speed.toFixed(1)}x</span>
+          </div>
+          <input
+            type="range"
+            min={0.5}
+            max={1.5}
+            step={0.1}
+            value={speed}
+            onChange={e => changeSpeed(parseFloat(e.target.value))}
+            className="w-full"
+            style={{ accentColor: '#8FBF8F' }}
+          />
+          <div className="flex justify-between text-[10px] mt-0.5" style={{ color: '#B0A899' }}>
+            <span>0.5x</span>
+            <span>1.5x</span>
+          </div>
         </div>
       </div>
 
