@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-const API = 'http://47.97.86.63:3456/api/bangbang'
+const API = '/api/bangbang'
 const MILESTONES = [10, 20, 50, 100]
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
 
