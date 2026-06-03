@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
-import TokenPrompt from "./TokenPrompt";
-import DataSync from "./DataSync";
 
 export const metadata: Metadata = {
   title: "腾哥和铁锤的百宝箱",
@@ -24,8 +22,6 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="min-h-screen pb-16">
-        <TokenPrompt />
-        <DataSync />
         {children}
         <nav
           className="fixed bottom-0 left-0 right-0 flex justify-around items-center h-14 z-50 safe-area-bottom"
